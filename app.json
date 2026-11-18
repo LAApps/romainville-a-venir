@@ -1,17 +1,21 @@
 {
   "expo": {
-    "name": "site_rav",
-    "slug": "site_rav",
+    "name": "Romainville à Venir",
+    "slug": "romainville-a-venir",
+    "scheme": "romainvilleavenir",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "backgroundColor": "#1B4965",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "fr.romainvilleavenir.app"
     },
     "android": {
+      "package": "fr.romainvilleavenir.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#1B4965",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -19,7 +23,25 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "static",
+      "name": "Romainville à Venir",
+      "themeColor": "#1B4965",
+      "backgroundColor": "#1B4965"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-image",
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "L'application a besoin d'accéder à vos photos pour ajouter des images.",
+          "cameraPermission": "L'application a besoin d'accéder à l'appareil photo pour ajouter des images."
+        }
+      ]
+    ]
   }
 }

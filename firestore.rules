@@ -1,0 +1,49 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Contenu des rubriques : lecture publique (tout le monde peut consulter
+    // l'app), écriture réservée aux comptes admin de l'association.
+    match /horsLesMurs_gallery/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /horsLesMurs_next/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /ateliers/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /actionsEducatives/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /elus/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /articles/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /faq/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Journal des adhésions et des questions citoyennes : écrites uniquement
+    // par la Cloud Function (SDK Admin, qui ignore ces règles). Seule
+    // l'équipe connectée peut les consulter ; personne ne peut les modifier
+    // depuis l'app.
+    match /adhesions/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    match /questionsCitoyens/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}

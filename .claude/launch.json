@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "expo-web",
+      "runtimeExecutable": "/Users/LA_Air/Desktop/site_rav/.claude/run-expo-web.sh",
+      "runtimeArgs": [],
+      "port": 8081
+    }
+  ]
+}

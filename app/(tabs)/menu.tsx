@@ -30,6 +30,21 @@ export default function MenuScreen() {
           </Link>
         ))}
 
+        <Link href="/installer" asChild>
+          <Pressable>
+            <Card style={[styles.row, { marginTop: spacing(6) }]}>
+              <View style={styles.iconWrap}>
+                <Ionicons name="phone-portrait-outline" size={22} color={colors.navy} />
+              </View>
+              <View style={{ flex: 1, marginLeft: spacing(3) }}>
+                <Text style={styles.label}>Installer l’application</Text>
+                <Text style={styles.desc}>Ajoutez-la sur votre écran d’accueil</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.grey} />
+            </Card>
+          </Pressable>
+        </Link>
+
         {isAdmin && (
           <Link href="/admin/adhesions" asChild>
             <Pressable>

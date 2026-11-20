@@ -1,49 +1,106 @@
+import { useState } from 'react';
 import { Link } from 'expo-router';
-import {
-  Linking,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Logo from '../../components/Logo';
-import InstagramCarousel from '../../components/InstagramCarousel';
-import { Card, SectionLabel } from '../../components/ui';
-import { rubriques } from '../../lib/content/navigation';
+import HighlightsCarousel from '../../components/HighlightsCarousel';
+import { Button, Card, Input, SectionLabel } from '../../components/ui';
+import { FieldLabel, FormModal } from '../../components/admin/FormModal';
+import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
+import { allDestinations, rubriques } from '../../lib/content/navigation';
+import { useAdmin } from '../../lib/auth/AdminContext';
 import { useCollection, type WithId } from '../../lib/data/useCollection';
-import type { InstagramPost } from '../../lib/content/types';
+import type { Highlight } from '../../lib/content/types';
+import { pickImage, uploadImage } from '../../lib/media/upload';
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../../lib/content/social';
 import { colors, radii, shadow, spacing, typography } from '../../lib/theme';
 
-const demoInstagramPosts: WithId<InstagramPost>[] = [
+const demoHighlights: WithId<Highlight>[] = [
   {
     id: 'demo-1',
-    caption: 'Merci à toutes et tous pour cette belle rencontre au marché de l’Horloge ! 🧡',
-    imageUrl: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=600',
-    permalink: 'https://www.instagram.com/romainville_a_venir/',
-    mediaType: 'IMAGE',
-    postedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+    titre: 'Prochain atelier participatif',
+    description: 'Venez donner votre avis sur les espaces verts du Plateau',
+    imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=700',
+    destination: 'rubrique',
+    rubriqueHref: '/ateliers',
   },
   {
     id: 'demo-2',
-    caption: 'Retour en images sur notre atelier participatif de la semaine dernière.',
-    imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600',
-    permalink: 'https://www.instagram.com/romainville_a_venir/',
-    mediaType: 'IMAGE',
-    postedAt: new Date(Date.now() - 7 * 86400000).toISOString(),
+    titre: 'Rejoignez l’association',
+    description: 'Militant, membre actif ou bienfaiteur',
+    imageUrl: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=700',
+    destination: 'rubrique',
+    rubriqueHref: '/(tabs)/adhesion',
   },
 ];
 
+function emptyHighlight(): Highlight {
+  return { titre: '', description: '', imageUrl: '', destination: 'aucune' };
+}
+
 export default function HomeScreen() {
-  const { items: instagramPosts } = useCollection<InstagramPost>(
-    'instagramPosts',
-    demoInstagramPosts,
-    'postedAt'
+  const { isAdmin } = useAdmin();
+  const { items: highlights, add, update, remove } = useCollection<Highlight>(
+    'highlights',
+    demoHighlights
   );
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<Highlight>(emptyHighlight());
+  const [submitting, setSubmitting] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyHighlight());
+    setModalVisible(true);
+  };
+
+  const openEdit = (highlight: WithId<Highlight>) => {
+    setEditingId(highlight.id);
+    setForm(highlight);
+    setModalVisible(true);
+  };
+
+  const handlePickImage = async () => {
+    const uri = await pickImage();
+    if (!uri) return;
+    setPicking(true);
+    try {
+      const url = await uploadImage(uri, `highlights/${Date.now()}.jpg`);
+      setForm((f) => ({ ...f, imageUrl: url }));
+    } finally {
+      setPicking(false);
+    }
+  };
+
+  const submit = async () => {
+    if (!form.titre.trim() || !form.imageUrl) {
+      Alert.alert('Champs requis', 'Merci d’ajouter au moins un titre et une image.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      if (editingId) await update(editingId, form);
+      else await add(form);
+      setModalVisible(false);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const confirmDelete = () => setConfirmVisible(true);
+
+  const handleDelete = async () => {
+    if (!editingId) return;
+    setConfirmVisible(false);
+    await remove(editingId);
+    setModalVisible(false);
+  };
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: spacing(12) }}>
@@ -61,6 +118,21 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.body}>
+        {(highlights.length > 0 || isAdmin) && (
+          <View style={{ marginBottom: spacing(6) }}>
+            <HighlightsCarousel highlights={highlights} isAdmin={isAdmin} onEdit={openEdit} />
+            {isAdmin && (
+              <Button
+                label="Ajouter une mise en avant"
+                variant="outline"
+                icon="star-outline"
+                onPress={openCreate}
+                style={{ marginTop: spacing(3) }}
+              />
+            )}
+          </View>
+        )}
+
         <Link href="/(tabs)/programme" asChild>
           <Pressable>
             <Card style={styles.programmeCard}>
@@ -102,8 +174,7 @@ export default function HomeScreen() {
 
         <View style={{ marginTop: spacing(7) }}>
           <SectionLabel>Suivez-nous</SectionLabel>
-          <InstagramCarousel posts={instagramPosts} />
-          <Pressable onPress={() => Linking.openURL(INSTAGRAM_URL)} style={{ marginTop: spacing(3) }}>
+          <Pressable onPress={() => Linking.openURL(INSTAGRAM_URL)}>
             <LinearGradient
               colors={['#FEDA77', '#DD2A7B', '#8134AF', '#515BD4']}
               start={{ x: 0, y: 1 }}
@@ -129,7 +200,104 @@ export default function HomeScreen() {
           </Pressable>
         </Link>
       </View>
+
+      <FormModal
+        visible={modalVisible}
+        title={editingId ? 'Modifier la mise en avant' : 'Nouvelle mise en avant'}
+        onClose={() => setModalVisible(false)}
+        onSubmit={submit}
+        onDelete={editingId ? confirmDelete : undefined}
+        submitting={submitting}
+      >
+        <View>
+          <FieldLabel>Image</FieldLabel>
+          {form.imageUrl ? <Image source={{ uri: form.imageUrl }} style={styles.preview} /> : null}
+          <Button
+            label={picking ? 'Chargement...' : 'Choisir une image'}
+            variant="outline"
+            icon="image-outline"
+            onPress={handlePickImage}
+            loading={picking}
+          />
+        </View>
+        <View>
+          <FieldLabel>Titre</FieldLabel>
+          <Input
+            value={form.titre}
+            onChangeText={(t) => setForm((f) => ({ ...f, titre: t }))}
+            placeholder="Ex : Prochain atelier participatif"
+          />
+        </View>
+        <View>
+          <FieldLabel>Description (facultatif)</FieldLabel>
+          <Input
+            value={form.description}
+            onChangeText={(t) => setForm((f) => ({ ...f, description: t }))}
+            placeholder="Une phrase courte"
+          />
+        </View>
+        <View>
+          <FieldLabel>Au clic, ouvrir...</FieldLabel>
+          <View style={styles.destRow}>
+            <DestChip
+              label="Une rubrique"
+              selected={form.destination === 'rubrique'}
+              onPress={() => setForm((f) => ({ ...f, destination: 'rubrique' }))}
+            />
+            <DestChip
+              label="Un lien externe"
+              selected={form.destination === 'lien'}
+              onPress={() => setForm((f) => ({ ...f, destination: 'lien' }))}
+            />
+            <DestChip
+              label="Aucun"
+              selected={form.destination === 'aucune'}
+              onPress={() => setForm((f) => ({ ...f, destination: 'aucune' }))}
+            />
+          </View>
+        </View>
+        {form.destination === 'rubrique' && (
+          <View style={styles.destRow}>
+            {allDestinations.map((d) => (
+              <DestChip
+                key={d.href}
+                label={d.label}
+                selected={form.rubriqueHref === d.href}
+                onPress={() => setForm((f) => ({ ...f, rubriqueHref: d.href }))}
+              />
+            ))}
+          </View>
+        )}
+        {form.destination === 'lien' && (
+          <View>
+            <FieldLabel>URL</FieldLabel>
+            <Input
+              value={form.lienExterne ?? ''}
+              onChangeText={(t) => setForm((f) => ({ ...f, lienExterne: t }))}
+              placeholder="https://..."
+              autoCapitalize="none"
+              keyboardType="url"
+            />
+          </View>
+        )}
+      </FormModal>
+
+      <ConfirmDialog
+        visible={confirmVisible}
+        title="Supprimer cette mise en avant ?"
+        message="Cette action est définitive."
+        onCancel={() => setConfirmVisible(false)}
+        onConfirm={handleDelete}
+      />
     </ScrollView>
+  );
+}
+
+function DestChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={[styles.chip, selected && styles.chipSelected]}>
+      <Text style={[styles.chipLabel, selected && styles.chipLabelSelected]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -238,4 +406,23 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     color: colors.white,
   },
+  preview: {
+    width: '100%',
+    height: 140,
+    borderRadius: radii.md,
+    marginBottom: spacing(3),
+    backgroundColor: colors.greyLight,
+  },
+  destRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing(2), marginTop: spacing(2) },
+  chip: {
+    paddingVertical: spacing(2),
+    paddingHorizontal: spacing(3.5),
+    borderRadius: radii.pill,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+  },
+  chipSelected: { backgroundColor: colors.navy, borderColor: colors.navy },
+  chipLabel: { fontFamily: typography.bodySemiBold, fontSize: 12, color: colors.ink },
+  chipLabelSelected: { color: colors.white },
 });

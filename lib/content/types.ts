@@ -43,10 +43,11 @@ export type NextEvent = {
   description: string;
 };
 
-export type InstagramPost = {
-  caption: string;
+export type Highlight = {
+  titre: string;
+  description: string;
   imageUrl: string;
-  permalink: string;
-  mediaType: 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
-  postedAt: string;
+  destination: 'rubrique' | 'lien' | 'aucune';
+  rubriqueHref?: string;
+  lienExterne?: string;
 };

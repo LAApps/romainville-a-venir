@@ -39,3 +39,27 @@ export const rubriques: NavItem[] = [
     icon: 'help-buoy',
   },
 ];
+
+// Toutes les destinations internes sélectionnables (ex. pour les mises en
+// avant de l'accueil) : les rubriques ci-dessus + les onglets principaux.
+export const allDestinations: NavItem[] = [
+  {
+    href: '/(tabs)/programme',
+    label: 'Notre programme',
+    description: '9 engagements pour Romainville',
+    icon: 'document-text',
+  },
+  {
+    href: '/(tabs)/adhesion',
+    label: 'Adhésion',
+    description: 'Rejoindre l’association',
+    icon: 'person-add',
+  },
+  {
+    href: '/(tabs)/elus',
+    label: 'Le coin des élus',
+    description: 'Nos 4 élus et leurs actions',
+    icon: 'people',
+  },
+  ...rubriques,
+];

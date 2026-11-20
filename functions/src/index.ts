@@ -1,5 +1,4 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { defineSecret } from 'firebase-functions/params';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
@@ -121,95 +120,5 @@ export const submitCitizenQuestion = onCall(
     });
 
     return { success: true };
-  }
-);
-
-// --- Instagram carousel sync ---
-// Fetches recent posts from the association's Instagram professional account
-// (via the Instagram Graph API, which requires the account to be linked to a
-// Facebook Page) and mirrors them into Firestore so the app can display them
-// without ever handling the access token on the client.
-
-const INSTAGRAM_ACCESS_TOKEN = defineSecret('INSTAGRAM_ACCESS_TOKEN');
-const INSTAGRAM_BUSINESS_ACCOUNT_ID = defineSecret('INSTAGRAM_BUSINESS_ACCOUNT_ID');
-const GRAPH_API_VERSION = 'v21.0';
-const INSTAGRAM_MAX_POSTS = 12;
-
-type InstagramMedia = {
-  id: string;
-  caption?: string;
-  media_type: 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
-  media_url?: string;
-  thumbnail_url?: string;
-  permalink: string;
-  timestamp: string;
-};
-
-async function syncInstagramPostsToFirestore(accessToken: string, accountId: string) {
-  const url =
-    `https://graph.facebook.com/${GRAPH_API_VERSION}/${accountId}/media` +
-    `?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp` +
-    `&limit=${INSTAGRAM_MAX_POSTS}&access_token=${accessToken}`;
-
-  const response = await fetch(url);
-  const json = (await response.json()) as { data?: InstagramMedia[]; error?: { message: string } };
-  if (!response.ok || !json.data) {
-    throw new Error(`Instagram Graph API error: ${json.error?.message ?? response.statusText}`);
-  }
-
-  const batch = db.batch();
-  const keepIds = new Set<string>();
-
-  for (const post of json.data) {
-    const imageUrl = post.media_type === 'VIDEO' ? post.thumbnail_url : post.media_url;
-    if (!imageUrl) continue;
-    keepIds.add(post.id);
-    batch.set(db.collection('instagramPosts').doc(post.id), {
-      caption: post.caption ?? '',
-      imageUrl,
-      permalink: post.permalink,
-      mediaType: post.media_type,
-      postedAt: post.timestamp,
-      syncedAt: FieldValue.serverTimestamp(),
-    });
-  }
-
-  // Drop posts that fell out of the latest window so the carousel stays current.
-  const existing = await db.collection('instagramPosts').get();
-  existing.forEach((doc) => {
-    if (!keepIds.has(doc.id)) batch.delete(doc.ref);
-  });
-
-  await batch.commit();
-  return keepIds.size;
-}
-
-export const syncInstagramPosts = onSchedule(
-  {
-    schedule: 'every 24 hours',
-    region: 'europe-west1',
-    secrets: [INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID],
-  },
-  async () => {
-    await syncInstagramPostsToFirestore(
-      INSTAGRAM_ACCESS_TOKEN.value(),
-      INSTAGRAM_BUSINESS_ACCOUNT_ID.value()
-    );
-  }
-);
-
-// Manual trigger (admin-only) so the team can force a refresh without waiting
-// for the daily schedule — handy right after setup or after posting.
-export const syncInstagramPostsNow = onCall(
-  { region: 'europe-west1', secrets: [INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_BUSINESS_ACCOUNT_ID] },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Connexion requise.');
-    }
-    const count = await syncInstagramPostsToFirestore(
-      INSTAGRAM_ACCESS_TOKEN.value(),
-      INSTAGRAM_BUSINESS_ACCOUNT_ID.value()
-    );
-    return { success: true, count };
   }
 );

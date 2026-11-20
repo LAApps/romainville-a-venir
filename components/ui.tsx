@@ -28,14 +28,12 @@ export function ScreenHeader({
   return (
     <View style={styles.header}>
       <View style={styles.headerTopRow}>
-        {showBack ? (
+        <Logo size={40} variant="white" />
+        {showBack && (
           <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color={colors.white} />
           </Pressable>
-        ) : (
-          <View />
         )}
-        <Logo size={74} variant="white" kind="mark" />
       </View>
       <Text style={styles.headerTitle}>{title}</Text>
       {subtitle ? <Text style={styles.headerSubtitle}>{subtitle}</Text> : null}

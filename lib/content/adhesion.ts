@@ -16,7 +16,17 @@ export type AdhesionData = {
 export const ASSOCIATION_IBAN = 'FR76 1027 8061 3700 0230 6180 107';
 export const ASSOCIATION_BIC = 'CMCIFR2A';
 export const ASSOCIATION_ADRESSE = 'Romainville à Venir — 28 Rue de la butte brachet, 93230 Romainville';
-export const HELLOASSO_URL = 'https://www.helloasso.com/associations/romainville-a-venir/adhesions/adhesions-asso';
+
+const HELLOASSO_BASE = 'https://www.helloasso.com/associations/romainville-a-venir/adhesions/adhesions-asso';
+
+// Identifiants de tarif HelloAsso (un par statut) : ouvrir directement
+// .../montant/<id> présélectionne la bonne activité sur leur formulaire,
+// au lieu de forcer l'adhérent à la rechercher une seconde fois.
+export const HELLOASSO_URLS: Record<StatutAdhesion, string> = {
+  militant: `${HELLOASSO_BASE}/montant/-25212991`,
+  actif: `${HELLOASSO_BASE}/montant/-25212970`,
+  bienfaiteur: `${HELLOASSO_BASE}/montant/-25212979`,
+};
 
 export const STATUTS: { value: StatutAdhesion; label: string; description: string }[] = [
   {

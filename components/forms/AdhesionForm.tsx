@@ -9,7 +9,7 @@ import {
   ASSOCIATION_ADRESSE,
   ASSOCIATION_BIC,
   ASSOCIATION_IBAN,
-  HELLOASSO_URL,
+  HELLOASSO_URLS,
   STATUTS,
   type AdhesionData,
   type StatutAdhesion,
@@ -121,7 +121,7 @@ export default function AdhesionForm() {
           <Button
             label="Payer en ligne via HelloAsso"
             icon="card-outline"
-            onPress={() => Linking.openURL(HELLOASSO_URL)}
+            onPress={() => Linking.openURL(HELLOASSO_URLS[data.statut])}
             style={{ marginTop: spacing(3) }}
           />
 

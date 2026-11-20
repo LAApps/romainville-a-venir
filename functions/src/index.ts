@@ -1,7 +1,7 @@
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { initializeApp } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue, type QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import * as nodemailer from 'nodemailer';
 
 initializeApp();
@@ -9,6 +9,7 @@ const db = getFirestore();
 
 const GMAIL_USER = defineSecret('GMAIL_USER');
 const GMAIL_APP_PASSWORD = defineSecret('GMAIL_APP_PASSWORD');
+const HELLOASSO_WEBHOOK_SECRET = defineSecret('HELLOASSO_WEBHOOK_SECRET');
 const ASSOCIATION_EMAIL = 'rom1ville.a.venir@gmail.com';
 
 function getTransporter(user: string, pass: string) {
@@ -120,5 +121,87 @@ export const submitCitizenQuestion = onCall(
     });
 
     return { success: true };
+  }
+);
+
+// Notification HelloAsso (paiement autorisé) : l'URL est enregistrée côté
+// HelloAsso (Mon Compte > Intégrations et API) avec ?key=<HELLOASSO_WEBHOOK_SECRET>
+// en paramètre — faute de compte "partenaire" HelloAsso, on n'a pas accès à
+// leur signature HMAC, donc ce secret dans l'URL fait office de vérification.
+// On rapproche le paiement à une adhésion par e-mail (puis nom/prénom en
+// repli) : HelloAsso ne nous laisse pas transmettre d'identifiant à nous.
+type HelloAssoNotification = {
+  eventType?: string;
+  data?: {
+    id?: number;
+    amount?: number;
+    state?: string;
+    order?: { id?: number };
+    payer?: { email?: string; firstName?: string; lastName?: string };
+  };
+};
+
+export const helloassoWebhook = onRequest(
+  { region: 'europe-west1', secrets: [HELLOASSO_WEBHOOK_SECRET] },
+  async (req, res) => {
+    if (req.query.key !== HELLOASSO_WEBHOOK_SECRET.value()) {
+      res.status(404).send('Not found');
+      return;
+    }
+
+    const body = req.body as HelloAssoNotification;
+    if (body?.eventType !== 'Payment' || body?.data?.state !== 'Authorized') {
+      res.status(200).send('Ignored');
+      return;
+    }
+
+    const { data } = body;
+    const payerEmail = data.payer?.email?.trim().toLowerCase();
+    const payerNom = data.payer?.lastName?.trim().toLowerCase();
+    const payerPrenom = data.payer?.firstName?.trim().toLowerCase();
+
+    const snapshot = await db.collection('adhesions').get();
+    let match: QueryDocumentSnapshot | undefined;
+    for (const doc of snapshot.docs) {
+      const a = doc.data();
+      if (a.paiementStatut === 'paye') continue;
+      if (payerEmail && a.email?.trim().toLowerCase() === payerEmail) {
+        match = doc;
+        break;
+      }
+      if (
+        !match &&
+        payerNom &&
+        payerPrenom &&
+        a.nom?.trim().toLowerCase() === payerNom &&
+        a.prenom?.trim().toLowerCase() === payerPrenom
+      ) {
+        match = doc;
+      }
+    }
+
+    if (match) {
+      await match.ref.update({
+        paiementStatut: 'paye',
+        paiementMontant: (data.amount ?? 0) / 100,
+        paiementId: data.id ?? null,
+        paiementOrderId: data.order?.id ?? null,
+        paiementDate: FieldValue.serverTimestamp(),
+      });
+    } else {
+      // Aucune adhésion correspondante trouvée : on garde une trace pour
+      // rapprochement manuel par l'équipe plutôt que de perdre le paiement.
+      await db.collection('paiementsNonRapproches').add({
+        email: data.payer?.email ?? null,
+        nom: data.payer?.lastName ?? null,
+        prenom: data.payer?.firstName ?? null,
+        montant: (data.amount ?? 0) / 100,
+        paiementId: data.id ?? null,
+        orderId: data.order?.id ?? null,
+        receivedAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    res.status(200).send('OK');
   }
 );

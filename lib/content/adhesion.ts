@@ -11,6 +11,10 @@ export type AdhesionData = {
   statut: StatutAdhesion;
   montantLibre?: string;
   conseilAdministration?: boolean;
+  // Renseigné par la Cloud Function helloassoWebhook quand le paiement
+  // correspondant est détecté — absent tant que ce n'est pas le cas.
+  paiementStatut?: 'paye';
+  paiementMontant?: number;
 };
 
 export const ASSOCIATION_IBAN = 'FR76 1027 8061 3700 0230 6180 107';

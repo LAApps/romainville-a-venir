@@ -157,7 +157,15 @@ export default function AdhesionsScreen() {
                 </Text>
                 <Text style={styles.date}>{formatDate(a.createdAt)}</Text>
               </View>
-              <Badge label={STATUT_LABEL[a.statut]} tone={STATUT_TONE[a.statut]} />
+              <View style={{ alignItems: 'flex-end', gap: spacing(1.5) }}>
+                <Badge label={STATUT_LABEL[a.statut]} tone={STATUT_TONE[a.statut]} />
+                {a.statut !== 'militant' && (
+                  <Badge
+                    label={a.paiementStatut === 'paye' ? 'Payé' : 'En attente de paiement'}
+                    tone={a.paiementStatut === 'paye' ? 'navy' : 'grey'}
+                  />
+                )}
+              </View>
             </View>
 
             <View style={styles.infoRow}>
@@ -176,6 +184,12 @@ export default function AdhesionsScreen() {
               <View style={styles.infoRow}>
                 <Ionicons name="cash-outline" size={14} color={colors.grey} />
                 <Text style={styles.infoText}>Montant proposé : {a.montantLibre}</Text>
+              </View>
+            ) : null}
+            {a.paiementStatut === 'paye' && a.paiementMontant !== undefined ? (
+              <View style={styles.infoRow}>
+                <Ionicons name="checkmark-circle-outline" size={14} color={colors.grey} />
+                <Text style={styles.infoText}>Paiement reçu via HelloAsso : {a.paiementMontant} €</Text>
               </View>
             ) : null}
             {a.conseilAdministration !== undefined && (

@@ -49,5 +49,12 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if false;
     }
+    // Paiements HelloAsso reçus par le webhook mais non rapprochés
+    // automatiquement à une adhésion (e-mail/nom différents) : à vérifier
+    // manuellement par l'équipe.
+    match /paiementsNonRapproches/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
   }
 }

@@ -51,3 +51,17 @@ export type Highlight = {
   rubriqueHref?: string;
   lienExterne?: string;
 };
+
+// Publication du conseil municipal : lien externe (vidéo YouTube du replay)
+// affiché avec sa vignette et visualisable directement dans l'application.
+export type Publication = {
+  titre: string;
+  url: string;
+  date: string; // ISO
+};
+
+// Document singleton contrôlant la diffusion en direct du conseil municipal.
+export type LiveStatus = {
+  enDirect: boolean;
+  url: string;
+};

@@ -28,7 +28,7 @@ import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { useAdmin } from '../../lib/auth/AdminContext';
 import { useCollection, type WithId } from '../../lib/data/useCollection';
 import { useDocument } from '../../lib/data/useDocument';
-import type { LiveStatus, Publication } from '../../lib/content/types';
+import type { LiveStatus, ProchainConseil, Publication } from '../../lib/content/types';
 import { extractYoutubeId, getYoutubeEmbedUrl, getYoutubeThumbnail } from '../../lib/content/youtube';
 import { colors, radii, spacing, typography } from '../../lib/theme';
 
@@ -62,6 +62,7 @@ const demoPublications: WithId<Publication>[] = [
 ];
 
 const demoLiveStatus: LiveStatus = { enDirect: false, url: '' };
+const demoProchainConseil: ProchainConseil = { date: '' };
 
 function emptyPublication(): Publication {
   return { titre: '', url: '', date: new Date().toISOString() };
@@ -75,6 +76,11 @@ export default function LiveScreen() {
     'date'
   );
   const liveStatus = useDocument<LiveStatus>('liveStatus', 'conseilMunicipal', demoLiveStatus);
+  const prochainConseil = useDocument<ProchainConseil>(
+    'prochainConseil',
+    'next',
+    demoProchainConseil
+  );
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -118,6 +124,7 @@ export default function LiveScreen() {
     <View style={{ flex: 1, backgroundColor: colors.offWhite }}>
       <ScreenHeader title="Conseil municipal" subtitle="En direct et en replay" />
       <ScrollView contentContainerStyle={styles.content}>
+        <NextCouncilSection isAdmin={isAdmin} prochainConseil={prochainConseil} />
         <LiveSection isAdmin={isAdmin} liveStatus={liveStatus} />
 
         <View style={{ marginTop: spacing(7) }}>
@@ -178,6 +185,95 @@ export default function LiveScreen() {
         onCancel={() => setConfirmVisible(false)}
         onConfirm={handleDelete}
       />
+    </View>
+  );
+}
+
+function NextCouncilSection({
+  isAdmin,
+  prochainConseil,
+}: {
+  isAdmin: boolean;
+  prochainConseil: ReturnType<typeof useDocument<ProchainConseil>>;
+}) {
+  const storedDate = prochainConseil.data.date ? prochainConseil.data.date.slice(0, 10) : '';
+  const storedHeure = prochainConseil.data.date ? prochainConseil.data.date.slice(11, 16) : '';
+
+  const [date, setDate] = useState(storedDate);
+  const [heure, setHeure] = useState(storedHeure);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setDate(storedDate);
+    setHeure(storedHeure);
+  }, [storedDate, storedHeure]);
+
+  const dirty = date !== storedDate || heure !== storedHeure;
+  const announced = !!prochainConseil.data.date;
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await prochainConseil.save({ date: date && heure ? `${date}T${heure}:00` : '' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const clear = async () => {
+    setDate('');
+    setHeure('');
+    await prochainConseil.save({ date: '' });
+  };
+
+  return (
+    <View>
+      {isAdmin && (
+        <Card style={{ marginBottom: spacing(3) }}>
+          <Text style={styles.liveToggleLabel}>Annoncer le prochain conseil</Text>
+          <View style={styles.councilDateRow}>
+            <Input
+              value={date}
+              onChangeText={setDate}
+              placeholder="AAAA-MM-JJ"
+              style={{ flex: 1 }}
+            />
+            <Input
+              value={heure}
+              onChangeText={setHeure}
+              placeholder="HH:MM"
+              style={{ flex: 1 }}
+            />
+          </View>
+          <View style={styles.councilActionsRow}>
+            {dirty && <Button label="Enregistrer" onPress={save} loading={saving} style={{ flex: 1 }} />}
+            {announced && !dirty && (
+              <Button label="Effacer l'annonce" variant="outline" onPress={clear} style={{ flex: 1 }} />
+            )}
+          </View>
+        </Card>
+      )}
+
+      {announced && (
+        <Card style={styles.announceCard}>
+          <Ionicons name="megaphone-outline" size={22} color={colors.coral} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.nextCouncilLabel}>Prochain conseil municipal</Text>
+            <Text style={styles.nextCouncilDate}>
+              {new Date(prochainConseil.data.date).toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              })}
+              {' à '}
+              {new Date(prochainConseil.data.date).toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+          </View>
+        </Card>
+      )}
     </View>
   );
 }
@@ -350,6 +446,28 @@ const styles = StyleSheet.create({
   infoText: { fontFamily: typography.body, fontSize: 13, color: colors.ink, lineHeight: 19 },
   liveToggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   liveToggleLabel: { fontFamily: typography.bodySemiBold, fontSize: 14, color: colors.ink },
+  councilDateRow: { flexDirection: 'row', gap: spacing(3), marginTop: spacing(3) },
+  councilActionsRow: { flexDirection: 'row', gap: spacing(3), marginTop: spacing(3) },
+  announceCard: {
+    marginBottom: spacing(4),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing(3),
+  },
+  nextCouncilLabel: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 11,
+    color: colors.grey,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  nextCouncilDate: {
+    fontFamily: typography.heading,
+    fontSize: 15,
+    color: colors.ink,
+    marginTop: 2,
+    textTransform: 'capitalize',
+  },
   playerWrap: {
     marginTop: spacing(2),
     height: 220,

@@ -65,3 +65,9 @@ export type LiveStatus = {
   enDirect: boolean;
   url: string;
 };
+
+// Document singleton annonçant la date du prochain conseil municipal.
+// date vide = aucune annonce en cours.
+export type ProchainConseil = {
+  date: string; // ISO, vide si aucune annonce
+};

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Logo from './Logo';
 import { colors, radii, shadow, spacing, typography } from '../lib/theme';
 
 export function ScreenHeader({
@@ -23,13 +24,19 @@ export function ScreenHeader({
   subtitle?: string;
   onBack?: boolean;
 }) {
+  const showBack = onBack && router.canGoBack();
   return (
     <View style={styles.header}>
-      {onBack && router.canGoBack() && (
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={22} color={colors.white} />
-        </Pressable>
-      )}
+      <View style={styles.headerTopRow}>
+        {showBack ? (
+          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={22} color={colors.white} />
+          </Pressable>
+        ) : (
+          <View />
+        )}
+        <Logo size={28} variant="white" kind="mark" />
+      </View>
       <Text style={styles.headerTitle}>{title}</Text>
       {subtitle ? <Text style={styles.headerSubtitle}>{subtitle}</Text> : null}
     </View>
@@ -172,8 +179,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing(6),
     paddingHorizontal: spacing(5),
   },
-  backBtn: {
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: spacing(3),
+  },
+  backBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,

@@ -10,14 +10,14 @@ import {
   Input,
   ScreenHeader,
   SectionLabel,
-} from '../components/ui';
-import { FieldLabel, FormModal } from '../components/admin/FormModal';
-import { ConfirmDialog } from '../components/admin/ConfirmDialog';
-import { useAdmin } from '../lib/auth/AdminContext';
-import { useCollection, type WithId } from '../lib/data/useCollection';
-import { submitCitizenQuestion } from '../lib/api/submissions';
-import type { FaqItem } from '../lib/content/types';
-import { colors, spacing, typography } from '../lib/theme';
+} from '../../components/ui';
+import { FieldLabel, FormModal } from '../../components/admin/FormModal';
+import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
+import { useAdmin } from '../../lib/auth/AdminContext';
+import { useCollection, type WithId } from '../../lib/data/useCollection';
+import { submitCitizenQuestion } from '../../lib/api/submissions';
+import type { FaqItem } from '../../lib/content/types';
+import { colors, spacing, typography } from '../../lib/theme';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);

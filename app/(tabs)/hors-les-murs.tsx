@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Alert, Image, Share, StyleSheet, Text, View, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Carousel from '../components/Carousel';
-import EventMap from '../components/EventMap';
+import Carousel from '../../components/Carousel';
+import EventMap from '../../components/EventMap';
 import {
   AdminFAB,
   Button,
@@ -11,13 +11,13 @@ import {
   Input,
   ScreenHeader,
   SectionLabel,
-} from '../components/ui';
-import { FieldLabel, FormModal } from '../components/admin/FormModal';
-import { useAdmin } from '../lib/auth/AdminContext';
-import { useCollection, type WithId } from '../lib/data/useCollection';
-import { pickImage, uploadImage } from '../lib/media/upload';
-import type { GalleryPhoto, NextEvent } from '../lib/content/types';
-import { colors, radii, spacing, typography } from '../lib/theme';
+} from '../../components/ui';
+import { FieldLabel, FormModal } from '../../components/admin/FormModal';
+import { useAdmin } from '../../lib/auth/AdminContext';
+import { useCollection, type WithId } from '../../lib/data/useCollection';
+import { pickImage, uploadImage } from '../../lib/media/upload';
+import type { GalleryPhoto, NextEvent } from '../../lib/content/types';
+import { colors, radii, spacing, typography } from '../../lib/theme';
 
 const demoPhotos: WithId<GalleryPhoto>[] = [
   {

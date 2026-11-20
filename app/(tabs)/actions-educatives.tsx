@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AdminFAB, Card, EmptyState, IconButton, Input, ScreenHeader } from '../components/ui';
-import { FieldLabel, FormModal } from '../components/admin/FormModal';
-import { ConfirmDialog } from '../components/admin/ConfirmDialog';
-import { useAdmin } from '../lib/auth/AdminContext';
-import { useCollection, type WithId } from '../lib/data/useCollection';
-import type { ActionEducative } from '../lib/content/types';
-import { colors, spacing, typography } from '../lib/theme';
+import { AdminFAB, Card, EmptyState, IconButton, Input, ScreenHeader } from '../../components/ui';
+import { FieldLabel, FormModal } from '../../components/admin/FormModal';
+import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
+import { useAdmin } from '../../lib/auth/AdminContext';
+import { useCollection, type WithId } from '../../lib/data/useCollection';
+import type { ActionEducative } from '../../lib/content/types';
+import { colors, spacing, typography } from '../../lib/theme';
 
 const demoActions: WithId<ActionEducative>[] = [
   {

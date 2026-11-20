@@ -60,6 +60,16 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="grid" size={size} color={color} />,
         }}
       />
+
+      {/* Rubriques secondaires : accessibles depuis l'accueil/le menu, pas via
+          un bouton dédié, mais la barre d'onglets doit rester visible dessus. */}
+      <Tabs.Screen name="live" options={{ href: null }} />
+      <Tabs.Screen name="hors-les-murs" options={{ href: null }} />
+      <Tabs.Screen name="ateliers" options={{ href: null }} />
+      <Tabs.Screen name="actions-educatives" options={{ href: null }} />
+      <Tabs.Screen name="une-question" options={{ href: null }} />
+      <Tabs.Screen name="admin/login" options={{ href: null }} />
+      <Tabs.Screen name="admin/adhesions" options={{ href: null }} />
     </Tabs>
   );
 }

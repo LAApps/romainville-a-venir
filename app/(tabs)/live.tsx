@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as WebBrowser from 'expo-web-browser';
-import { Button, Card, ScreenHeader } from '../components/ui';
-import { colors, spacing, typography } from '../lib/theme';
+import { Button, Card, ScreenHeader } from '../../components/ui';
+import { colors, spacing, typography } from '../../lib/theme';
 
 const CHANNEL_LIVE_URL = 'https://www.youtube.com/@villederomainville2180/live';
 const CHANNEL_STREAMS_URL = 'https://www.youtube.com/@villederomainville2180/streams';

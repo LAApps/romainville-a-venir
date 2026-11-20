@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { Button, Card, Input, ScreenHeader } from '../../components/ui';
-import { FieldLabel } from '../../components/admin/FormModal';
-import { useAdmin } from '../../lib/auth/AdminContext';
-import { colors, spacing, typography } from '../../lib/theme';
+import { Button, Card, Input, ScreenHeader } from '../../../components/ui';
+import { FieldLabel } from '../../../components/admin/FormModal';
+import { useAdmin } from '../../../lib/auth/AdminContext';
+import { colors, spacing, typography } from '../../../lib/theme';
 
 export default function AdminLoginScreen() {
   const { isAdmin, adminEmail, isDemo, signIn, signOut } = useAdmin();

@@ -2,11 +2,11 @@ import { useMemo, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Badge, Button, Card, EmptyState, Input, ScreenHeader } from '../../components/ui';
-import { useAdmin } from '../../lib/auth/AdminContext';
-import { useCollection, type WithId } from '../../lib/data/useCollection';
-import { STATUTS, type AdhesionData, type StatutAdhesion } from '../../lib/content/adhesion';
-import { colors, radii, spacing, typography } from '../../lib/theme';
+import { Badge, Button, Card, EmptyState, Input, ScreenHeader } from '../../../components/ui';
+import { useAdmin } from '../../../lib/auth/AdminContext';
+import { useCollection, type WithId } from '../../../lib/data/useCollection';
+import { STATUTS, type AdhesionData, type StatutAdhesion } from '../../../lib/content/adhesion';
+import { colors, radii, spacing, typography } from '../../../lib/theme';
 
 type FirestoreTimestamp = { toDate: () => Date };
 

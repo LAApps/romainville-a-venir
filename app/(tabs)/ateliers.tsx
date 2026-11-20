@@ -10,13 +10,13 @@ import {
   Input,
   ScreenHeader,
   SectionLabel,
-} from '../components/ui';
-import { FieldLabel, FormModal } from '../components/admin/FormModal';
-import { ConfirmDialog } from '../components/admin/ConfirmDialog';
-import { useAdmin } from '../lib/auth/AdminContext';
-import { useCollection, type WithId } from '../lib/data/useCollection';
-import type { Atelier } from '../lib/content/types';
-import { colors, radii, spacing, typography } from '../lib/theme';
+} from '../../components/ui';
+import { FieldLabel, FormModal } from '../../components/admin/FormModal';
+import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
+import { useAdmin } from '../../lib/auth/AdminContext';
+import { useCollection, type WithId } from '../../lib/data/useCollection';
+import type { Atelier } from '../../lib/content/types';
+import { colors, radii, spacing, typography } from '../../lib/theme';
 
 const demoAteliers: WithId<Atelier>[] = [
   {

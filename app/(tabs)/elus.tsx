@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Image, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   AdminFAB,
   Button,
@@ -13,6 +13,7 @@ import {
 import { FieldLabel, FormModal } from '../../components/admin/FormModal';
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { elus } from '../../lib/content/elus';
+import { openMailto } from '../../lib/utils/contact';
 import { useAdmin } from '../../lib/auth/AdminContext';
 import { useCollection, type WithId } from '../../lib/data/useCollection';
 import type { Article } from '../../lib/content/types';
@@ -89,7 +90,7 @@ export default function ElusScreen() {
 
   const contactElu = (nom: string, email: string) => {
     const subject = encodeURIComponent(`Message pour ${nom} — via l’application`);
-    Linking.openURL(`mailto:${email}?subject=${subject}`);
+    openMailto(`mailto:${email}?subject=${subject}`);
   };
 
   return (

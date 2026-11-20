@@ -1,5 +1,6 @@
 import { Link } from 'expo-router';
 import {
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -7,13 +8,43 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Logo from '../../components/Logo';
+import InstagramCarousel from '../../components/InstagramCarousel';
 import { Card, SectionLabel } from '../../components/ui';
 import { rubriques } from '../../lib/content/navigation';
+import { useCollection, type WithId } from '../../lib/data/useCollection';
+import type { InstagramPost } from '../../lib/content/types';
+import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../../lib/content/social';
 import { colors, radii, shadow, spacing, typography } from '../../lib/theme';
 
+const demoInstagramPosts: WithId<InstagramPost>[] = [
+  {
+    id: 'demo-1',
+    caption: 'Merci à toutes et tous pour cette belle rencontre au marché de l’Horloge ! 🧡',
+    imageUrl: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=600',
+    permalink: 'https://www.instagram.com/romainville_a_venir/',
+    mediaType: 'IMAGE',
+    postedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+  },
+  {
+    id: 'demo-2',
+    caption: 'Retour en images sur notre atelier participatif de la semaine dernière.',
+    imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600',
+    permalink: 'https://www.instagram.com/romainville_a_venir/',
+    mediaType: 'IMAGE',
+    postedAt: new Date(Date.now() - 7 * 86400000).toISOString(),
+  },
+];
+
 export default function HomeScreen() {
+  const { items: instagramPosts } = useCollection<InstagramPost>(
+    'instagramPosts',
+    demoInstagramPosts,
+    'postedAt'
+  );
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: spacing(12) }}>
       <View style={styles.hero}>
@@ -67,6 +98,22 @@ export default function HomeScreen() {
               </Pressable>
             </Link>
           </View>
+        </View>
+
+        <View style={{ marginTop: spacing(7) }}>
+          <SectionLabel>Suivez-nous</SectionLabel>
+          <InstagramCarousel posts={instagramPosts} />
+          <Pressable onPress={() => Linking.openURL(INSTAGRAM_URL)} style={{ marginTop: spacing(3) }}>
+            <LinearGradient
+              colors={['#FEDA77', '#DD2A7B', '#8134AF', '#515BD4']}
+              start={{ x: 0, y: 1 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.instagramBtn}
+            >
+              <Ionicons name="logo-instagram" size={20} color={colors.white} />
+              <Text style={styles.instagramBtnLabel}>Suivre {INSTAGRAM_HANDLE} sur Instagram</Text>
+            </LinearGradient>
+          </Pressable>
         </View>
 
         <Link href="/(tabs)/adhesion" asChild>
@@ -177,5 +224,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.9)',
     marginTop: 2,
+  },
+  instagramBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing(2),
+    paddingVertical: spacing(3.5),
+    borderRadius: radii.pill,
+  },
+  instagramBtnLabel: {
+    fontFamily: typography.bodySemiBold,
+    fontSize: 13.5,
+    color: colors.white,
   },
 });

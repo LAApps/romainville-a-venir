@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
@@ -9,6 +9,7 @@ import {
   ASSOCIATION_ADRESSE,
   ASSOCIATION_BIC,
   ASSOCIATION_IBAN,
+  HELLOASSO_URL,
   STATUTS,
   type AdhesionData,
   type StatutAdhesion,
@@ -112,8 +113,24 @@ export default function AdhesionForm() {
 
         <Card>
           <FieldLabel>
-            Paiement {isBienfaiteur ? 'libre (à partir de 15 €)' : 'de 15 €'} — par virement ou chèque
+            Paiement {isBienfaiteur ? 'libre (à partir de 15 €)' : 'de 15 €'}
           </FieldLabel>
+          <Text style={styles.helperText}>
+            Le plus simple : réglez en ligne par carte, en toute sécurité via HelloAsso.
+          </Text>
+          <Button
+            label="Payer en ligne via HelloAsso"
+            icon="card-outline"
+            onPress={() => Linking.openURL(HELLOASSO_URL)}
+            style={{ marginTop: spacing(3) }}
+          />
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>ou par virement / chèque</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
           <View style={styles.paymentRow}>
             <Text style={styles.paymentLabel}>IBAN</Text>
             <Text style={styles.paymentValue}>{ASSOCIATION_IBAN}</Text>
@@ -367,6 +384,15 @@ const styles = StyleSheet.create({
     marginTop: spacing(2),
     lineHeight: 19,
   },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing(2),
+    marginTop: spacing(5),
+    marginBottom: spacing(1),
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  dividerText: { fontFamily: typography.body, fontSize: 11, color: colors.grey },
   paymentRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing(2) },
   paymentLabel: { fontFamily: typography.bodyMedium, fontSize: 12.5, color: colors.grey },
   paymentValue: { fontFamily: typography.bodySemiBold, fontSize: 12.5, color: colors.ink },

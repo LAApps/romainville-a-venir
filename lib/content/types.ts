@@ -42,3 +42,11 @@ export type NextEvent = {
   lng: number;
   description: string;
 };
+
+export type InstagramPost = {
+  caption: string;
+  imageUrl: string;
+  permalink: string;
+  mediaType: 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
+  postedAt: string;
+};

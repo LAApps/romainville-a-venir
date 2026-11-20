@@ -33,6 +33,13 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
+    // Publications Instagram : écrites uniquement par la Cloud Function de
+    // synchronisation (SDK Admin), lecture publique pour le carrousel.
+    match /instagramPosts/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Journal des adhésions et des questions citoyennes : écrites uniquement
     // par la Cloud Function (SDK Admin, qui ignore ces règles). Seule
     // l'équipe connectée peut les consulter ; personne ne peut les modifier

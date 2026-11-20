@@ -14,7 +14,7 @@ import { useAdmin } from '../../lib/auth/AdminContext';
 import { useCollection, type WithId } from '../../lib/data/useCollection';
 import type { Highlight } from '../../lib/content/types';
 import { pickImage, uploadImage } from '../../lib/media/upload';
-import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../../lib/content/social';
+import { FACEBOOK_URL, INSTAGRAM_URL } from '../../lib/content/social';
 import { colors, radii, shadow, spacing, typography } from '../../lib/theme';
 
 const demoHighlights: WithId<Highlight>[] = [
@@ -174,17 +174,25 @@ export default function HomeScreen() {
 
         <View style={{ marginTop: spacing(7) }}>
           <SectionLabel>Suivez-nous</SectionLabel>
-          <Pressable onPress={() => Linking.openURL(INSTAGRAM_URL)}>
-            <LinearGradient
-              colors={['#FEDA77', '#DD2A7B', '#8134AF', '#515BD4']}
-              start={{ x: 0, y: 1 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.instagramBtn}
-            >
-              <Ionicons name="logo-instagram" size={20} color={colors.white} />
-              <Text style={styles.instagramBtnLabel}>Suivre {INSTAGRAM_HANDLE} sur Instagram</Text>
-            </LinearGradient>
-          </Pressable>
+          <View style={styles.socialRow}>
+            <Pressable style={{ flex: 1 }} onPress={() => Linking.openURL(INSTAGRAM_URL)}>
+              <LinearGradient
+                colors={['#FEDA77', '#DD2A7B', '#8134AF', '#515BD4']}
+                start={{ x: 0, y: 1 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.instagramBtn}
+              >
+                <Ionicons name="logo-instagram" size={20} color={colors.white} />
+                <Text style={styles.instagramBtnLabel}>Instagram</Text>
+              </LinearGradient>
+            </Pressable>
+            <Pressable style={{ flex: 1 }} onPress={() => Linking.openURL(FACEBOOK_URL)}>
+              <View style={[styles.instagramBtn, { backgroundColor: '#1877F2' }]}>
+                <Ionicons name="logo-facebook" size={20} color={colors.white} />
+                <Text style={styles.instagramBtnLabel}>Facebook</Text>
+              </View>
+            </Pressable>
+          </View>
         </View>
 
         <Link href="/(tabs)/adhesion" asChild>
@@ -392,6 +400,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.9)',
     marginTop: 2,
+  },
+  socialRow: {
+    flexDirection: 'row',
+    gap: spacing(3),
   },
   instagramBtn: {
     flexDirection: 'row',

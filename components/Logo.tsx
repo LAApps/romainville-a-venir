@@ -18,8 +18,8 @@ const ASSETS: Record<'full' | 'mark', Record<'navy' | 'white', { source: any; ra
     white: { source: require('../assets/logo/logo-white.png'), ratio: 1 },
   },
   mark: {
-    navy: { source: require('../assets/logo/mark-navy.png'), ratio: 308 / 326 },
-    white: { source: require('../assets/logo/mark-white.png'), ratio: 308 / 326 },
+    navy: { source: require('../assets/logo/mark-navy.png'), ratio: 775 / 316 },
+    white: { source: require('../assets/logo/mark-white.png'), ratio: 775 / 316 },
   },
 };
 

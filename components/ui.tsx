@@ -35,7 +35,7 @@ export function ScreenHeader({
         ) : (
           <View />
         )}
-        <Logo size={28} variant="white" kind="mark" />
+        <Logo size={74} variant="white" kind="mark" />
       </View>
       <Text style={styles.headerTitle}>{title}</Text>
       {subtitle ? <Text style={styles.headerSubtitle}>{subtitle}</Text> : null}

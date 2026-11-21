@@ -74,5 +74,12 @@ service cloud.firestore {
     match /pushTokens/{docId} {
       allow read, write: if false;
     }
+    // Inscriptions aux actions éducatives : écrites uniquement par la Cloud
+    // Function submitInscriptionAction (SDK Admin). Seule l'équipe connectée
+    // peut les consulter.
+    match /inscriptionsActions/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
   }
 }

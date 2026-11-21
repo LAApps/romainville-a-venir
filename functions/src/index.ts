@@ -255,3 +255,55 @@ export const sendPushNotification = onCall({ region: 'europe-west1' }, async (re
 
   return { sent: response.successCount };
 });
+
+type InscriptionActionPayload = {
+  actionId: string;
+  actionTitre: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  reponses?: Record<string, string>;
+};
+
+export const submitInscriptionAction = onCall(
+  { region: 'europe-west1', secrets: [GMAIL_USER, GMAIL_APP_PASSWORD] },
+  async (request) => {
+    const data = request.data as InscriptionActionPayload;
+
+    if (!data?.nom?.trim() || !data?.prenom?.trim() || !data?.email?.trim() || !data?.telephone?.trim()) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Nom, prénom, e-mail et téléphone sont obligatoires.'
+      );
+    }
+
+    await db.collection('inscriptionsActions').add({ ...data, createdAt: FieldValue.serverTimestamp() });
+
+    const transporter = getTransporter(GMAIL_USER.value(), GMAIL_APP_PASSWORD.value());
+    const lines = [
+      `Nouvelle inscription — ${data.actionTitre}`,
+      '',
+      `Nom : ${data.nom}`,
+      `Prénom : ${data.prenom}`,
+      `E-mail : ${data.email}`,
+      `Téléphone : ${data.telephone}`,
+    ];
+    if (data.reponses) {
+      lines.push('');
+      for (const [question, reponse] of Object.entries(data.reponses)) {
+        lines.push(`${question} : ${reponse}`);
+      }
+    }
+
+    await transporter.sendMail({
+      from: `Romainville à Venir <${GMAIL_USER.value()}>`,
+      to: ASSOCIATION_EMAIL,
+      replyTo: data.email,
+      subject: `Nouvelle inscription — ${data.actionTitre} (${data.prenom} ${data.nom})`,
+      text: lines.join('\n'),
+    });
+
+    return { success: true };
+  }
+);

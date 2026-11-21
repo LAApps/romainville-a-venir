@@ -17,6 +17,7 @@ import { useAdmin } from '../../lib/auth/AdminContext';
 import { useCollection, type WithId } from '../../lib/data/useCollection';
 import { useHighlightSync } from '../../lib/content/useHighlightSync';
 import { pickImage, uploadImage } from '../../lib/media/upload';
+import { submitInscriptionAction } from '../../lib/api/submissions';
 import type { ActionEducative } from '../../lib/content/types';
 import { colors, radii, spacing, typography } from '../../lib/theme';
 
@@ -33,7 +34,19 @@ const demoActions: WithId<ActionEducative>[] = [
 ];
 
 function emptyAction(): ActionEducative {
-  return { titre: '', description: '', publicCible: '', effectifMax: '', modalite: '' };
+  return {
+    titre: '',
+    description: '',
+    publicCible: '',
+    effectifMax: '',
+    modalite: '',
+    inscriptionsOuvertes: false,
+    champsSupplementaires: [],
+  };
+}
+
+function emptyInscription() {
+  return { nom: '', prenom: '', email: '', telephone: '' };
 }
 
 export default function ActionsEducativesScreen() {
@@ -48,6 +61,13 @@ export default function ActionsEducativesScreen() {
   const [highlightImageUrl, setHighlightImageUrl] = useState('');
   const [pickingImage, setPickingImage] = useState(false);
   const { isFeatured, syncHighlight } = useHighlightSync();
+
+  // Formulaire public d'inscription à une action (indépendant du formulaire
+  // d'édition admin ci-dessus).
+  const [regAction, setRegAction] = useState<WithId<ActionEducative> | null>(null);
+  const [regForm, setRegForm] = useState(emptyInscription());
+  const [regReponses, setRegReponses] = useState<Record<string, string>>({});
+  const [regSubmitting, setRegSubmitting] = useState(false);
 
   const openCreate = () => {
     setEditingId(null);
@@ -118,6 +138,38 @@ export default function ActionsEducativesScreen() {
     setModalVisible(false);
   };
 
+  const openInscription = (action: WithId<ActionEducative>) => {
+    setRegAction(action);
+    setRegForm(emptyInscription());
+    setRegReponses({});
+  };
+
+  const submitInscription = async () => {
+    if (!regAction) return;
+    if (
+      !regForm.nom.trim() ||
+      !regForm.prenom.trim() ||
+      !regForm.email.trim() ||
+      !regForm.telephone.trim()
+    ) {
+      Alert.alert('Champs requis', 'Merci de renseigner nom, prénom, e-mail et téléphone.');
+      return;
+    }
+    setRegSubmitting(true);
+    try {
+      await submitInscriptionAction({
+        actionId: regAction.id,
+        actionTitre: regAction.titre,
+        ...regForm,
+        reponses: regReponses,
+      });
+      setRegAction(null);
+      Alert.alert('Inscription envoyée', 'Votre inscription a bien été enregistrée. Merci !');
+    } finally {
+      setRegSubmitting(false);
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.offWhite }}>
       <ScreenHeader title="Actions éducatives" subtitle="Pour la jeunesse et les familles" />
@@ -135,6 +187,14 @@ export default function ActionsEducativesScreen() {
               <MetaItem icon="speedometer-outline" label="Effectif max." value={action.effectifMax} />
               <MetaItem icon="construct-outline" label="Modalité" value={action.modalite} />
             </View>
+            {action.inscriptionsOuvertes && (
+              <Button
+                label="S’inscrire"
+                icon="person-add-outline"
+                onPress={() => openInscription(action)}
+                style={{ marginTop: spacing(4) }}
+              />
+            )}
           </Card>
         ))}
       </ScrollView>
@@ -187,6 +247,24 @@ export default function ActionsEducativesScreen() {
           />
         </View>
         <CheckboxRow
+          label="Ouvrir les inscriptions"
+          checked={!!form.inscriptionsOuvertes}
+          onToggle={() => setForm((f) => ({ ...f, inscriptionsOuvertes: !f.inscriptionsOuvertes }))}
+        />
+        {form.inscriptionsOuvertes && (
+          <View>
+            <FieldLabel>Renseignements supplémentaires à demander (un par ligne)</FieldLabel>
+            <Input
+              multiline
+              value={(form.champsSupplementaires ?? []).join('\n')}
+              onChangeText={(t) =>
+                setForm((f) => ({ ...f, champsSupplementaires: t.split('\n').filter(Boolean) }))
+              }
+              placeholder={'Âge de l’enfant\nÉcole fréquentée\n...'}
+            />
+          </View>
+        )}
+        <CheckboxRow
           label="Mettre en avant sur l’accueil"
           checked={misEnAvant}
           onToggle={() => setMisEnAvant((v) => !v)}
@@ -215,6 +293,50 @@ export default function ActionsEducativesScreen() {
         onCancel={() => setConfirmVisible(false)}
         onConfirm={handleDelete}
       />
+
+      <FormModal
+        visible={!!regAction}
+        title={`S’inscrire — ${regAction?.titre ?? ''}`}
+        onClose={() => setRegAction(null)}
+        onSubmit={submitInscription}
+        submitting={regSubmitting}
+        submitLabel="Envoyer l’inscription"
+      >
+        <View>
+          <FieldLabel>Nom</FieldLabel>
+          <Input value={regForm.nom} onChangeText={(t) => setRegForm((f) => ({ ...f, nom: t }))} />
+        </View>
+        <View>
+          <FieldLabel>Prénom</FieldLabel>
+          <Input value={regForm.prenom} onChangeText={(t) => setRegForm((f) => ({ ...f, prenom: t }))} />
+        </View>
+        <View>
+          <FieldLabel>E-mail</FieldLabel>
+          <Input
+            value={regForm.email}
+            onChangeText={(t) => setRegForm((f) => ({ ...f, email: t }))}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </View>
+        <View>
+          <FieldLabel>Téléphone</FieldLabel>
+          <Input
+            value={regForm.telephone}
+            onChangeText={(t) => setRegForm((f) => ({ ...f, telephone: t }))}
+            keyboardType="phone-pad"
+          />
+        </View>
+        {(regAction?.champsSupplementaires ?? []).map((champ) => (
+          <View key={champ}>
+            <FieldLabel>{champ}</FieldLabel>
+            <Input
+              value={regReponses[champ] ?? ''}
+              onChangeText={(t) => setRegReponses((r) => ({ ...r, [champ]: t }))}
+            />
+          </View>
+        ))}
+      </FormModal>
     </View>
   );
 }

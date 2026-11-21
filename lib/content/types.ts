@@ -22,6 +22,12 @@ export type ActionEducative = {
   publicCible: string;
   effectifMax: string;
   modalite: string;
+  // Présent et vrai quand l'admin a ouvert les inscriptions : affiche un
+  // bouton "S'inscrire" menant à un formulaire public pour cette action.
+  inscriptionsOuvertes?: boolean;
+  // Intitulés des renseignements à demander en plus de nom/prénom/e-mail/
+  // téléphone (ex. "Âge de l'enfant"), propres à cette action.
+  champsSupplementaires?: string[];
 };
 
 export type FaqItem = {

@@ -33,3 +33,23 @@ export async function submitCitizenQuestion(data: CitizenQuestionData): Promise<
   console.info('[mode démo] Question reçue (non envoyée) :', data);
   await new Promise((resolve) => setTimeout(resolve, 600));
 }
+
+export type InscriptionActionData = {
+  actionId: string;
+  actionTitre: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  reponses?: Record<string, string>;
+};
+
+export async function submitInscriptionAction(data: InscriptionActionData): Promise<void> {
+  if (isFirebaseConfigured && functions) {
+    const call = httpsCallable(functions, 'submitInscriptionAction');
+    await call(data);
+    return;
+  }
+  console.info('[mode démo] Inscription reçue (non envoyée) :', data);
+  await new Promise((resolve) => setTimeout(resolve, 600));
+}

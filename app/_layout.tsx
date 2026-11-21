@@ -10,6 +10,7 @@ import {
   Montserrat_600SemiBold,
 } from '@expo-google-fonts/montserrat';
 import { AdminProvider } from '../lib/auth/AdminContext';
+import NotificationPrompt from '../components/NotificationPrompt';
 import { colors } from '../lib/theme';
 
 SystemUI.setBackgroundColorAsync(colors.offWhite);
@@ -36,6 +37,7 @@ export default function RootLayout() {
     <AdminProvider>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.offWhite } }} />
+      <NotificationPrompt />
     </AdminProvider>
   );
 }

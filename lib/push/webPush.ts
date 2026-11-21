@@ -15,6 +15,14 @@ export function isPushSupported(): boolean {
   );
 }
 
+// Vrai uniquement quand l'app tourne lancée depuis l'écran d'accueil (PWA
+// installée), pas dans un onglet de navigateur classique.
+export function isStandalone(): boolean {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return false;
+  const nav = navigator as Navigator & { standalone?: boolean };
+  return nav.standalone === true || window.matchMedia?.('(display-mode: standalone)').matches === true;
+}
+
 export type PushPermissionResult = 'granted' | 'denied' | 'unsupported' | 'error';
 
 export async function enablePushNotifications(): Promise<PushPermissionResult> {

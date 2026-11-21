@@ -125,7 +125,12 @@ export default function ElusScreen() {
         <View style={styles.eluGrid}>
           {elus.map((elu) => (
             <Card key={elu.id} style={styles.eluCard}>
-              <Image source={elu.photo} style={styles.eluPhoto} resizeMode="cover" />
+              <Image
+                source={elu.photo}
+                style={styles.eluPhoto}
+                resizeMode="cover"
+                accessibilityLabel={`Photo de ${elu.nom}`}
+              />
               <Text style={styles.eluNom}>{elu.nom}</Text>
               <Text style={styles.eluRole}>{elu.role}</Text>
               <Button
@@ -162,7 +167,12 @@ export default function ElusScreen() {
               <Text style={styles.articleContenu}>{article.contenu}</Text>
               {article.media.map((m, idx) =>
                 m.type === 'image' ? (
-                  <Image key={idx} source={{ uri: m.url }} style={styles.articleImage} />
+                  <Image
+                    key={idx}
+                    source={{ uri: m.url }}
+                    style={styles.articleImage}
+                    accessibilityLabel={`Photo illustrant l'article "${article.titre}"`}
+                  />
                 ) : (
                   <Text key={idx} style={styles.articleLink}>
                     {m.type === 'video' ? '🎬 ' : '🔗 '}

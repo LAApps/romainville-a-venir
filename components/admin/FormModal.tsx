@@ -32,7 +32,12 @@ export function FormModal({
         >
           <View style={styles.headerRow}>
             <Text style={styles.title}>{title}</Text>
-            <Pressable onPress={onClose} hitSlop={10}>
+            <Pressable
+              onPress={onClose}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Fermer"
+            >
               <Ionicons name="close" size={24} color={colors.grey} />
             </Pressable>
           </View>

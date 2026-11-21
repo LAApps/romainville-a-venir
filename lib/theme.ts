@@ -8,7 +8,9 @@ export const colors = {
   white: '#FFFFFF',
   offWhite: '#F4F7F9',
   ink: '#152633',
-  grey: '#6B7C88',
+  // Légèrement assombri par rapport à l'extraction d'origine (#6B7C88) pour
+  // atteindre 4.5:1 sur fond blanc (WCAG AA texte normal) — audit accessibilité.
+  grey: '#64747F',
   greyLight: '#E3E9ED',
   success: '#2E8B57',
   border: '#D9E2E8',

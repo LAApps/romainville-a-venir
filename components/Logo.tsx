@@ -12,5 +12,12 @@ const ASSETS: Record<'navy' | 'white', any> = {
 };
 
 export default function Logo({ size = 72, variant = 'navy' }: Props) {
-  return <Image source={ASSETS[variant]} style={{ width: size, height: size }} resizeMode="contain" />;
+  return (
+    <Image
+      source={ASSETS[variant]}
+      style={{ width: size, height: size }}
+      resizeMode="contain"
+      accessibilityLabel="Logo Romainville à Venir"
+    />
+  );
 }

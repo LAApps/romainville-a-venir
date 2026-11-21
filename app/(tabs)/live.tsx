@@ -398,8 +398,12 @@ function WebPlayerFallback({ url }: { url: string }) {
     <Pressable
       style={styles.webFallback}
       onPress={() => WebBrowser.openBrowserAsync(url)}
+      accessibilityRole="link"
+      accessibilityLabel="Regarder la vidéo sur YouTube"
     >
-      {thumbnail && <Image source={{ uri: thumbnail }} style={StyleSheet.absoluteFill} />}
+      {thumbnail && (
+        <Image source={{ uri: thumbnail }} style={StyleSheet.absoluteFill} accessibilityLabel="" />
+      )}
       <View style={styles.webFallbackOverlay}>
         <Ionicons name="play-circle" size={48} color={colors.white} />
       </View>
@@ -434,8 +438,15 @@ function PublicationCard({
           )}
         </View>
       ) : (
-        <Pressable onPress={onToggleExpand} style={styles.thumbWrap}>
-          {thumbnail && <Image source={{ uri: thumbnail }} style={StyleSheet.absoluteFill} />}
+        <Pressable
+          onPress={onToggleExpand}
+          style={styles.thumbWrap}
+          accessibilityRole="button"
+          accessibilityLabel={`Lire la vidéo "${publication.titre}"`}
+        >
+          {thumbnail && (
+            <Image source={{ uri: thumbnail }} style={StyleSheet.absoluteFill} accessibilityLabel="" />
+          )}
           <View style={styles.thumbOverlay}>
             <Ionicons name="play-circle" size={44} color={colors.white} />
           </View>

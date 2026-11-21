@@ -30,7 +30,13 @@ export function ScreenHeader({
       <View style={styles.headerTopRow}>
         <Logo size={40} variant="white" />
         {showBack && (
-          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={12}
+            style={styles.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Retour"
+          >
             <Ionicons name="chevron-back" size={22} color={colors.white} />
           </Pressable>
         )}
@@ -136,7 +142,12 @@ export function SectionLabel({ children }: { children: ReactNode }) {
 
 export function AdminFAB({ onPress }: { onPress: () => void }) {
   return (
-    <Pressable style={styles.fab} onPress={onPress}>
+    <Pressable
+      style={styles.fab}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Ajouter"
+    >
       <Ionicons name="add" size={28} color={colors.white} />
     </Pressable>
   );
@@ -162,7 +173,14 @@ export function CheckboxRow({
   onToggle: () => void;
 }) {
   return (
-    <Pressable onPress={onToggle} style={styles.checkboxRow} hitSlop={6}>
+    <Pressable
+      onPress={onToggle}
+      style={styles.checkboxRow}
+      hitSlop={6}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      accessibilityLabel={label}
+    >
       <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
         {checked && <Ionicons name="checkmark" size={14} color={colors.white} />}
       </View>
@@ -176,14 +194,22 @@ export function IconButton({
   onPress,
   color = colors.navy,
   size = 20,
+  accessibilityLabel = 'Modifier',
 }: {
   name: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
   color?: string;
   size?: number;
+  accessibilityLabel?: string;
 }) {
   return (
-    <Pressable onPress={onPress} hitSlop={10} style={styles.iconBtn}>
+    <Pressable
+      onPress={onPress}
+      hitSlop={10}
+      style={styles.iconBtn}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
       <Ionicons name={name} size={size} color={color} />
     </Pressable>
   );

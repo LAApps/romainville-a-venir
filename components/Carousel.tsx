@@ -44,14 +44,24 @@ export default function Carousel({
         }}
         renderItem={({ item }) => (
           <View style={[styles.slide, { width: ITEM_WIDTH }]}>
-            <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" />
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.image}
+              resizeMode="cover"
+              accessibilityLabel={item.legende || 'Photo de la rubrique Hors les murs'}
+            />
             {item.legende ? (
               <View style={styles.captionWrap}>
                 <Text style={styles.caption}>{item.legende}</Text>
               </View>
             ) : null}
             {isAdmin && onDelete && (
-              <Pressable style={styles.deleteBtn} onPress={() => onDelete(item.id)}>
+              <Pressable
+                style={styles.deleteBtn}
+                onPress={() => onDelete(item.id)}
+                accessibilityRole="button"
+                accessibilityLabel="Supprimer cette photo"
+              >
                 <Ionicons name="trash" size={16} color={colors.white} />
               </Pressable>
             )}

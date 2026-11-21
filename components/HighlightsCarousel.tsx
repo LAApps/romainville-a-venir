@@ -86,6 +86,8 @@ export default function HighlightsCarousel({
           <Pressable
             style={[styles.slide, { width: ITEM_WIDTH }]}
             onPress={() => handlePress(item)}
+            accessibilityRole={item.destination !== 'aucune' ? 'link' : undefined}
+            accessibilityLabel={[item.titre, item.description].filter(Boolean).join(' — ')}
           >
             <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" />
             <View style={styles.overlay} />
@@ -105,7 +107,12 @@ export default function HighlightsCarousel({
               </View>
             )}
             {isAdmin && onEdit && (
-              <Pressable style={styles.editBtn} onPress={() => onEdit(item)}>
+              <Pressable
+                style={styles.editBtn}
+                onPress={() => onEdit(item)}
+                accessibilityRole="button"
+                accessibilityLabel={`Modifier la mise en avant "${item.titre}"`}
+              >
                 <Ionicons name="create-outline" size={16} color={colors.white} />
               </Pressable>
             )}

@@ -69,6 +69,9 @@ export default function TabsLayout() {
       <Tabs.Screen name="actions-educatives" options={{ href: null }} />
       <Tabs.Screen name="une-question" options={{ href: null }} />
       <Tabs.Screen name="installer" options={{ href: null }} />
+      <Tabs.Screen name="mentions-legales" options={{ href: null }} />
+      <Tabs.Screen name="confidentialite" options={{ href: null }} />
+      <Tabs.Screen name="accessibilite" options={{ href: null }} />
       <Tabs.Screen name="admin/login" options={{ href: null }} />
       <Tabs.Screen name="admin/adhesions" options={{ href: null }} />
       <Tabs.Screen name="admin/notifications" options={{ href: null }} />

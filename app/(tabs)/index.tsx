@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'expo-router';
 import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,8 +12,16 @@ import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { allDestinations, rubriques } from '../../lib/content/navigation';
 import { useAdmin } from '../../lib/auth/AdminContext';
 import { useCollection, type WithId } from '../../lib/data/useCollection';
-import type { Highlight } from '../../lib/content/types';
+import type {
+  ActionEducative,
+  Article,
+  Atelier,
+  GalleryPhoto,
+  Highlight,
+  Publication,
+} from '../../lib/content/types';
 import { pickImage, uploadImage } from '../../lib/media/upload';
+import { getYoutubeThumbnail } from '../../lib/content/youtube';
 import { FACEBOOK_URL, INSTAGRAM_URL } from '../../lib/content/social';
 import { colors, radii, shadow, spacing, typography } from '../../lib/theme';
 
@@ -40,11 +48,80 @@ function emptyHighlight(): Highlight {
   return { titre: '', description: '', imageUrl: '', destination: 'aucune' };
 }
 
+type PickableItem = {
+  key: string;
+  source: string;
+  titre: string;
+  description: string;
+  imageUrl: string;
+  rubriqueHref: string;
+};
+
 export default function HomeScreen() {
   const { isAdmin } = useAdmin();
   const { items: highlights, add, update, remove } = useCollection<Highlight>(
     'highlights',
     demoHighlights
+  );
+
+  // Publications existantes de l'app, proposées comme raccourci pour
+  // pré-remplir une mise en avant au lieu de tout ressaisir à la main.
+  const articles = useCollection<Article>('articles', []);
+  const ateliers = useCollection<Atelier>('ateliers', []);
+  const actionsEducatives = useCollection<ActionEducative>('actionsEducatives', []);
+  const conseilPublications = useCollection<Publication>('conseilMunicipalPublications', []);
+  const galleryPhotos = useCollection<GalleryPhoto>('horsLesMurs_gallery', []);
+
+  const pickableItems = useMemo<PickableItem[]>(
+    () => [
+      ...articles.items.map((a) => ({
+        key: `article-${a.id}`,
+        source: 'Le coin des élus',
+        titre: a.titre,
+        description: a.contenu,
+        imageUrl: a.media.find((m) => m.type === 'image')?.url ?? '',
+        rubriqueHref: '/(tabs)/elus',
+      })),
+      ...ateliers.items.map((a) => ({
+        key: `atelier-${a.id}`,
+        source: 'Ateliers participatifs',
+        titre: a.titre,
+        description: a.description,
+        imageUrl: '',
+        rubriqueHref: '/ateliers',
+      })),
+      ...actionsEducatives.items.map((a) => ({
+        key: `action-${a.id}`,
+        source: 'Actions éducatives',
+        titre: a.titre,
+        description: a.description,
+        imageUrl: '',
+        rubriqueHref: '/actions-educatives',
+      })),
+      ...conseilPublications.items.map((p) => ({
+        key: `pub-${p.id}`,
+        source: 'Conseil municipal',
+        titre: p.titre,
+        description: '',
+        imageUrl: getYoutubeThumbnail(p.url) ?? '',
+        rubriqueHref: '/live',
+      })),
+      ...galleryPhotos.items.map((g) => ({
+        key: `photo-${g.id}`,
+        source: 'Hors les murs',
+        titre: g.legende || 'Photo',
+        description: '',
+        imageUrl: g.imageUrl,
+        rubriqueHref: '/hors-les-murs',
+      })),
+    ],
+    [
+      articles.items,
+      ateliers.items,
+      actionsEducatives.items,
+      conseilPublications.items,
+      galleryPhotos.items,
+    ]
   );
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -53,17 +130,31 @@ export default function HomeScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [picking, setPicking] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyHighlight());
+    setPickerOpen(pickableItems.length > 0);
     setModalVisible(true);
   };
 
   const openEdit = (highlight: WithId<Highlight>) => {
     setEditingId(highlight.id);
     setForm(highlight);
+    setPickerOpen(false);
     setModalVisible(true);
+  };
+
+  const applyPick = (item: PickableItem) => {
+    setForm({
+      titre: item.titre,
+      description: item.description.slice(0, 140),
+      imageUrl: item.imageUrl,
+      destination: 'rubrique',
+      rubriqueHref: item.rubriqueHref,
+    });
+    setPickerOpen(false);
   };
 
   const handlePickImage = async () => {
@@ -217,76 +308,122 @@ export default function HomeScreen() {
         onDelete={editingId ? confirmDelete : undefined}
         submitting={submitting}
       >
-        <View>
-          <FieldLabel>Image</FieldLabel>
-          {form.imageUrl ? <Image source={{ uri: form.imageUrl }} style={styles.preview} /> : null}
-          <Button
-            label={picking ? 'Chargement...' : 'Choisir une image'}
-            variant="outline"
-            icon="image-outline"
-            onPress={handlePickImage}
-            loading={picking}
-          />
-        </View>
-        <View>
-          <FieldLabel>Titre</FieldLabel>
-          <Input
-            value={form.titre}
-            onChangeText={(t) => setForm((f) => ({ ...f, titre: t }))}
-            placeholder="Ex : Prochain atelier participatif"
-          />
-        </View>
-        <View>
-          <FieldLabel>Description (facultatif)</FieldLabel>
-          <Input
-            value={form.description}
-            onChangeText={(t) => setForm((f) => ({ ...f, description: t }))}
-            placeholder="Une phrase courte"
-          />
-        </View>
-        <View>
-          <FieldLabel>Au clic, ouvrir...</FieldLabel>
-          <View style={styles.destRow}>
-            <DestChip
-              label="Une rubrique"
-              selected={form.destination === 'rubrique'}
-              onPress={() => setForm((f) => ({ ...f, destination: 'rubrique' }))}
-            />
-            <DestChip
-              label="Un lien externe"
-              selected={form.destination === 'lien'}
-              onPress={() => setForm((f) => ({ ...f, destination: 'lien' }))}
-            />
-            <DestChip
-              label="Aucun"
-              selected={form.destination === 'aucune'}
-              onPress={() => setForm((f) => ({ ...f, destination: 'aucune' }))}
-            />
-          </View>
-        </View>
-        {form.destination === 'rubrique' && (
-          <View style={styles.destRow}>
-            {allDestinations.map((d) => (
-              <DestChip
-                key={d.href}
-                label={d.label}
-                selected={form.rubriqueHref === d.href}
-                onPress={() => setForm((f) => ({ ...f, rubriqueHref: d.href }))}
-              />
-            ))}
-          </View>
-        )}
-        {form.destination === 'lien' && (
+        {pickerOpen ? (
           <View>
-            <FieldLabel>URL</FieldLabel>
-            <Input
-              value={form.lienExterne ?? ''}
-              onChangeText={(t) => setForm((f) => ({ ...f, lienExterne: t }))}
-              placeholder="https://..."
-              autoCapitalize="none"
-              keyboardType="url"
+            <FieldLabel>Choisir une publication existante</FieldLabel>
+            {pickableItems.length === 0 ? (
+              <Text style={styles.emptyPickerText}>
+                Aucune publication disponible pour le moment.
+              </Text>
+            ) : (
+              pickableItems.map((item) => (
+                <Pressable key={item.key} onPress={() => applyPick(item)} style={styles.pickRow}>
+                  {item.imageUrl ? (
+                    <Image source={{ uri: item.imageUrl }} style={styles.pickThumb} />
+                  ) : (
+                    <View style={[styles.pickThumb, styles.pickThumbPlaceholder]}>
+                      <Ionicons name="image-outline" size={18} color={colors.grey} />
+                    </View>
+                  )}
+                  <View style={{ flex: 1, marginLeft: spacing(3) }}>
+                    <Text style={styles.pickTitre} numberOfLines={1}>
+                      {item.titre}
+                    </Text>
+                    <Text style={styles.pickSource}>{item.source}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.grey} />
+                </Pressable>
+              ))
+            )}
+            <Button
+              label="Créer manuellement à la place"
+              variant="ghost"
+              onPress={() => setPickerOpen(false)}
+              style={{ marginTop: spacing(2) }}
             />
           </View>
+        ) : (
+          <>
+            {!editingId && pickableItems.length > 0 && (
+              <Button
+                label="Choisir parmi vos publications"
+                variant="outline"
+                icon="list-outline"
+                onPress={() => setPickerOpen(true)}
+              />
+            )}
+            <View>
+              <FieldLabel>Image</FieldLabel>
+              {form.imageUrl ? <Image source={{ uri: form.imageUrl }} style={styles.preview} /> : null}
+              <Button
+                label={picking ? 'Chargement...' : 'Choisir une image'}
+                variant="outline"
+                icon="image-outline"
+                onPress={handlePickImage}
+                loading={picking}
+              />
+            </View>
+            <View>
+              <FieldLabel>Titre</FieldLabel>
+              <Input
+                value={form.titre}
+                onChangeText={(t) => setForm((f) => ({ ...f, titre: t }))}
+                placeholder="Ex : Prochain atelier participatif"
+              />
+            </View>
+            <View>
+              <FieldLabel>Description (facultatif)</FieldLabel>
+              <Input
+                value={form.description}
+                onChangeText={(t) => setForm((f) => ({ ...f, description: t }))}
+                placeholder="Une phrase courte"
+              />
+            </View>
+            <View>
+              <FieldLabel>Au clic, ouvrir...</FieldLabel>
+              <View style={styles.destRow}>
+                <DestChip
+                  label="Une rubrique"
+                  selected={form.destination === 'rubrique'}
+                  onPress={() => setForm((f) => ({ ...f, destination: 'rubrique' }))}
+                />
+                <DestChip
+                  label="Un lien externe"
+                  selected={form.destination === 'lien'}
+                  onPress={() => setForm((f) => ({ ...f, destination: 'lien' }))}
+                />
+                <DestChip
+                  label="Aucun"
+                  selected={form.destination === 'aucune'}
+                  onPress={() => setForm((f) => ({ ...f, destination: 'aucune' }))}
+                />
+              </View>
+            </View>
+            {form.destination === 'rubrique' && (
+              <View style={styles.destRow}>
+                {allDestinations.map((d) => (
+                  <DestChip
+                    key={d.href}
+                    label={d.label}
+                    selected={form.rubriqueHref === d.href}
+                    onPress={() => setForm((f) => ({ ...f, rubriqueHref: d.href }))}
+                  />
+                ))}
+              </View>
+            )}
+            {form.destination === 'lien' && (
+              <View>
+                <FieldLabel>URL</FieldLabel>
+                <Input
+                  value={form.lienExterne ?? ''}
+                  onChangeText={(t) => setForm((f) => ({ ...f, lienExterne: t }))}
+                  placeholder="https://..."
+                  autoCapitalize="none"
+                  keyboardType="url"
+                />
+              </View>
+            )}
+          </>
         )}
       </FormModal>
 
@@ -437,4 +574,26 @@ const styles = StyleSheet.create({
   chipSelected: { backgroundColor: colors.navy, borderColor: colors.navy },
   chipLabel: { fontFamily: typography.bodySemiBold, fontSize: 12, color: colors.ink },
   chipLabelSelected: { color: colors.white },
+  emptyPickerText: {
+    fontFamily: typography.body,
+    fontSize: 13,
+    color: colors.grey,
+    paddingVertical: spacing(4),
+  },
+  pickRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing(2.5),
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  pickThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.md,
+    backgroundColor: colors.greyLight,
+  },
+  pickThumbPlaceholder: { alignItems: 'center', justifyContent: 'center' },
+  pickTitre: { fontFamily: typography.bodySemiBold, fontSize: 13.5, color: colors.ink },
+  pickSource: { fontFamily: typography.body, fontSize: 11, color: colors.grey, marginTop: 2 },
 });

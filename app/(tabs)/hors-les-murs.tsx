@@ -7,6 +7,7 @@ import {
   AdminFAB,
   Button,
   Card,
+  CheckboxRow,
   IconButton,
   Input,
   ScreenHeader,
@@ -15,6 +16,7 @@ import {
 import { FieldLabel, FormModal } from '../../components/admin/FormModal';
 import { useAdmin } from '../../lib/auth/AdminContext';
 import { useCollection, type WithId } from '../../lib/data/useCollection';
+import { useHighlightSync } from '../../lib/content/useHighlightSync';
 import { pickImage, uploadImage } from '../../lib/media/upload';
 import type { GalleryPhoto, NextEvent } from '../../lib/content/types';
 import { colors, radii, spacing, typography } from '../../lib/theme';
@@ -55,6 +57,8 @@ export default function HorsLesMursScreen() {
   const [photoModal, setPhotoModal] = useState(false);
   const [photoForm, setPhotoForm] = useState<GalleryPhoto>(emptyPhoto());
   const [picking, setPicking] = useState(false);
+  const [misEnAvant, setMisEnAvant] = useState(false);
+  const { syncHighlight } = useHighlightSync();
 
   const [eventModal, setEventModal] = useState(false);
   const [eventForm, setEventForm] = useState<NextEvent>(event ?? demoNextEvent);
@@ -77,8 +81,14 @@ export default function HorsLesMursScreen() {
       Alert.alert('Photo requise', 'Choisissez une photo avant d’enregistrer.');
       return;
     }
-    await gallery.add(photoForm);
+    const id = await gallery.add(photoForm);
+    await syncHighlight(`photo-${id}`, misEnAvant, {
+      titre: photoForm.legende || 'Hors les murs',
+      imageUrl: photoForm.imageUrl,
+      rubriqueHref: '/hors-les-murs',
+    });
     setPhotoForm(emptyPhoto());
+    setMisEnAvant(false);
     setPhotoModal(false);
   };
 
@@ -127,6 +137,7 @@ export default function HorsLesMursScreen() {
             icon="camera-outline"
             onPress={() => {
               setPhotoForm(emptyPhoto());
+              setMisEnAvant(false);
               setPhotoModal(true);
             }}
             style={{ marginTop: spacing(3) }}
@@ -202,6 +213,11 @@ export default function HorsLesMursScreen() {
             placeholder="Ex : Rencontre au marché de l’Horloge"
           />
         </View>
+        <CheckboxRow
+          label="Mettre en avant sur l’accueil"
+          checked={misEnAvant}
+          onToggle={() => setMisEnAvant((v) => !v)}
+        />
       </FormModal>
 
       <FormModal
@@ -264,7 +280,15 @@ export default function HorsLesMursScreen() {
         </View>
       </FormModal>
 
-      {isAdmin && <AdminFAB onPress={() => setPhotoModal(true)} />}
+      {isAdmin && (
+        <AdminFAB
+          onPress={() => {
+            setPhotoForm(emptyPhoto());
+            setMisEnAvant(false);
+            setPhotoModal(true);
+          }}
+        />
+      )}
     </View>
   );
 }

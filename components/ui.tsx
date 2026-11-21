@@ -152,6 +152,25 @@ export function Input(props: TextInputProps & { multiline?: boolean }) {
   );
 }
 
+export function CheckboxRow({
+  label,
+  checked,
+  onToggle,
+}: {
+  label: string;
+  checked: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Pressable onPress={onToggle} style={styles.checkboxRow} hitSlop={6}>
+      <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
+        {checked && <Ionicons name="checkmark" size={14} color={colors.white} />}
+      </View>
+      <Text style={styles.checkboxLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
 export function IconButton({
   name,
   onPress,
@@ -285,6 +304,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.greyLight,
   },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing(2.5),
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+  },
+  checkboxChecked: { backgroundColor: colors.navy, borderColor: colors.navy },
+  checkboxLabel: { fontFamily: typography.bodyMedium, fontSize: 13, color: colors.ink },
   input: {
     borderWidth: 1.5,
     borderColor: colors.border,

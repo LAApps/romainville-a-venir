@@ -1,13 +1,24 @@
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AdminFAB, Card, EmptyState, IconButton, Input, ScreenHeader } from '../../components/ui';
+import {
+  AdminFAB,
+  Button,
+  Card,
+  CheckboxRow,
+  EmptyState,
+  IconButton,
+  Input,
+  ScreenHeader,
+} from '../../components/ui';
 import { FieldLabel, FormModal } from '../../components/admin/FormModal';
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { useAdmin } from '../../lib/auth/AdminContext';
 import { useCollection, type WithId } from '../../lib/data/useCollection';
+import { useHighlightSync } from '../../lib/content/useHighlightSync';
+import { pickImage, uploadImage } from '../../lib/media/upload';
 import type { ActionEducative } from '../../lib/content/types';
-import { colors, spacing, typography } from '../../lib/theme';
+import { colors, radii, spacing, typography } from '../../lib/theme';
 
 const demoActions: WithId<ActionEducative>[] = [
   {
@@ -33,17 +44,37 @@ export default function ActionsEducativesScreen() {
   const [form, setForm] = useState<ActionEducative>(emptyAction());
   const [submitting, setSubmitting] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const [misEnAvant, setMisEnAvant] = useState(false);
+  const [highlightImageUrl, setHighlightImageUrl] = useState('');
+  const [pickingImage, setPickingImage] = useState(false);
+  const { isFeatured, syncHighlight } = useHighlightSync();
 
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyAction());
+    setMisEnAvant(false);
+    setHighlightImageUrl('');
     setModalVisible(true);
   };
 
   const openEdit = (action: WithId<ActionEducative>) => {
     setEditingId(action.id);
     setForm(action);
+    setMisEnAvant(isFeatured(`action-${action.id}`));
+    setHighlightImageUrl('');
     setModalVisible(true);
+  };
+
+  const handlePickHighlightImage = async () => {
+    const uri = await pickImage();
+    if (!uri) return;
+    setPickingImage(true);
+    try {
+      const url = await uploadImage(uri, `highlights/${Date.now()}.jpg`);
+      setHighlightImageUrl(url);
+    } finally {
+      setPickingImage(false);
+    }
   };
 
   const submit = async () => {
@@ -51,10 +82,24 @@ export default function ActionsEducativesScreen() {
       Alert.alert('Champs requis', 'Merci de renseigner au moins un titre et une description.');
       return;
     }
+    if (misEnAvant && !highlightImageUrl) {
+      Alert.alert(
+        'Image requise',
+        'Pour mettre cette action en avant sur l’accueil, ajoutez une image ci-dessus.'
+      );
+      return;
+    }
     setSubmitting(true);
     try {
+      let id = editingId;
       if (editingId) await update(editingId, form);
-      else await add(form);
+      else id = await add(form);
+      await syncHighlight(`action-${id}`, misEnAvant, {
+        titre: form.titre,
+        description: form.description.slice(0, 140),
+        imageUrl: highlightImageUrl,
+        rubriqueHref: '/actions-educatives',
+      });
       setModalVisible(false);
     } finally {
       setSubmitting(false);
@@ -141,6 +186,26 @@ export default function ActionsEducativesScreen() {
             placeholder="Lieu, fréquence, horaires..."
           />
         </View>
+        <CheckboxRow
+          label="Mettre en avant sur l’accueil"
+          checked={misEnAvant}
+          onToggle={() => setMisEnAvant((v) => !v)}
+        />
+        {misEnAvant && (
+          <View>
+            <FieldLabel>Image pour la mise en avant</FieldLabel>
+            {highlightImageUrl ? (
+              <Image source={{ uri: highlightImageUrl }} style={styles.highlightPreview} />
+            ) : null}
+            <Button
+              label={pickingImage ? 'Chargement...' : 'Choisir une image'}
+              variant="outline"
+              icon="image-outline"
+              onPress={handlePickHighlightImage}
+              loading={pickingImage}
+            />
+          </View>
+        )}
       </FormModal>
 
       <ConfirmDialog
@@ -181,4 +246,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   metaValue: { fontFamily: typography.body, fontSize: 13, color: colors.ink, marginTop: 1 },
+  highlightPreview: {
+    width: '100%',
+    height: 140,
+    borderRadius: radii.md,
+    marginBottom: spacing(3),
+    backgroundColor: colors.greyLight,
+  },
 });

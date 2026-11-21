@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   AdminFAB,
   Badge,
+  Button,
   Card,
+  CheckboxRow,
   EmptyState,
   IconButton,
   Input,
@@ -15,6 +17,8 @@ import { FieldLabel, FormModal } from '../../components/admin/FormModal';
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { useAdmin } from '../../lib/auth/AdminContext';
 import { useCollection, type WithId } from '../../lib/data/useCollection';
+import { useHighlightSync } from '../../lib/content/useHighlightSync';
+import { pickImage, uploadImage } from '../../lib/media/upload';
 import type { Atelier } from '../../lib/content/types';
 import { colors, radii, spacing, typography } from '../../lib/theme';
 
@@ -64,6 +68,10 @@ export default function AteliersScreen() {
   const [form, setForm] = useState<Atelier>(emptyAtelier());
   const [submitting, setSubmitting] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const [misEnAvant, setMisEnAvant] = useState(false);
+  const [highlightImageUrl, setHighlightImageUrl] = useState('');
+  const [pickingImage, setPickingImage] = useState(false);
+  const { isFeatured, syncHighlight } = useHighlightSync();
 
   const aVenir = items.filter((a) => a.statut === 'a_venir');
   const passes = items.filter((a) => a.statut === 'passe');
@@ -71,13 +79,29 @@ export default function AteliersScreen() {
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyAtelier());
+    setMisEnAvant(false);
+    setHighlightImageUrl('');
     setModalVisible(true);
   };
 
   const openEdit = (atelier: WithId<Atelier>) => {
     setEditingId(atelier.id);
     setForm(atelier);
+    setMisEnAvant(isFeatured(`atelier-${atelier.id}`));
+    setHighlightImageUrl('');
     setModalVisible(true);
+  };
+
+  const handlePickHighlightImage = async () => {
+    const uri = await pickImage();
+    if (!uri) return;
+    setPickingImage(true);
+    try {
+      const url = await uploadImage(uri, `highlights/${Date.now()}.jpg`);
+      setHighlightImageUrl(url);
+    } finally {
+      setPickingImage(false);
+    }
   };
 
   const submit = async () => {
@@ -85,10 +109,24 @@ export default function AteliersScreen() {
       Alert.alert('Champs requis', 'Merci de renseigner au moins un titre et un lieu.');
       return;
     }
+    if (misEnAvant && !highlightImageUrl) {
+      Alert.alert(
+        'Image requise',
+        'Pour mettre cet atelier en avant sur l’accueil, ajoutez une image ci-dessus.'
+      );
+      return;
+    }
     setSubmitting(true);
     try {
+      let id = editingId;
       if (editingId) await update(editingId, form);
-      else await add(form);
+      else id = await add(form);
+      await syncHighlight(`atelier-${id}`, misEnAvant, {
+        titre: form.titre,
+        description: form.description.slice(0, 140),
+        imageUrl: highlightImageUrl,
+        rubriqueHref: '/ateliers',
+      });
       setModalVisible(false);
     } finally {
       setSubmitting(false);
@@ -186,6 +224,26 @@ export default function AteliersScreen() {
             }
           />
         </View>
+        <CheckboxRow
+          label="Mettre en avant sur l’accueil"
+          checked={misEnAvant}
+          onToggle={() => setMisEnAvant((v) => !v)}
+        />
+        {misEnAvant && (
+          <View>
+            <FieldLabel>Image pour la mise en avant</FieldLabel>
+            {highlightImageUrl ? (
+              <Image source={{ uri: highlightImageUrl }} style={styles.highlightPreview} />
+            ) : null}
+            <Button
+              label={pickingImage ? 'Chargement...' : 'Choisir une image'}
+              variant="outline"
+              icon="image-outline"
+              onPress={handlePickHighlightImage}
+              loading={pickingImage}
+            />
+          </View>
+        )}
       </FormModal>
 
       <ConfirmDialog
@@ -299,4 +357,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   chipLabel: { fontFamily: typography.bodySemiBold, fontSize: 13, color: colors.ink },
+  highlightPreview: {
+    width: '100%',
+    height: 140,
+    borderRadius: radii.md,
+    marginBottom: spacing(3),
+    backgroundColor: colors.greyLight,
+  },
 });

@@ -4,6 +4,7 @@ import {
   AdminFAB,
   Button,
   Card,
+  CheckboxRow,
   EmptyState,
   IconButton,
   Input,
@@ -16,6 +17,7 @@ import { elus } from '../../lib/content/elus';
 import { openMailto } from '../../lib/utils/contact';
 import { useAdmin } from '../../lib/auth/AdminContext';
 import { useCollection, type WithId } from '../../lib/data/useCollection';
+import { useHighlightSync } from '../../lib/content/useHighlightSync';
 import type { Article } from '../../lib/content/types';
 import { colors, radii, spacing, typography } from '../../lib/theme';
 
@@ -46,16 +48,20 @@ export default function ElusScreen() {
   const [form, setForm] = useState<Article>(emptyArticle());
   const [submitting, setSubmitting] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const [misEnAvant, setMisEnAvant] = useState(false);
+  const { isFeatured, syncHighlight } = useHighlightSync();
 
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyArticle());
+    setMisEnAvant(false);
     setModalVisible(true);
   };
 
   const openEdit = (article: WithId<Article>) => {
     setEditingId(article.id);
     setForm(article);
+    setMisEnAvant(isFeatured(`article-${article.id}`));
     setModalVisible(true);
   };
 
@@ -64,10 +70,25 @@ export default function ElusScreen() {
       Alert.alert('Champs requis', 'Merci de renseigner au moins un titre et un contenu.');
       return;
     }
+    const imageUrl = form.media.find((m) => m.type === 'image')?.url ?? '';
+    if (misEnAvant && !imageUrl) {
+      Alert.alert(
+        'Image requise',
+        'Pour mettre cet article en avant sur l’accueil, ajoutez une image ci-dessus.'
+      );
+      return;
+    }
     setSubmitting(true);
     try {
+      let id = editingId;
       if (editingId) await update(editingId, form);
-      else await add(form);
+      else id = await add(form);
+      await syncHighlight(`article-${id}`, misEnAvant, {
+        titre: form.titre,
+        description: form.contenu.slice(0, 140),
+        imageUrl,
+        rubriqueHref: '/(tabs)/elus',
+      });
       setModalVisible(false);
     } catch (e) {
       Alert.alert('Erreur', String(e));
@@ -195,6 +216,11 @@ export default function ElusScreen() {
             autoCapitalize="none"
           />
         </View>
+        <CheckboxRow
+          label="Mettre en avant sur l’accueil"
+          checked={misEnAvant}
+          onToggle={() => setMisEnAvant((v) => !v)}
+        />
       </FormModal>
 
       <ConfirmDialog

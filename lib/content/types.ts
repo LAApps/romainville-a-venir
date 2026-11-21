@@ -50,6 +50,10 @@ export type Highlight = {
   destination: 'rubrique' | 'lien' | 'aucune';
   rubriqueHref?: string;
   lienExterne?: string;
+  // Présent quand cette mise en avant a été créée depuis le bouton "Mettre
+  // en avant" d'une publication (ex. "article-<id>") : permet de la
+  // retrouver pour la mettre à jour ou la retirer depuis cette publication.
+  sourceRef?: string;
 };
 
 // Publication du conseil municipal : lien externe (vidéo YouTube du replay)

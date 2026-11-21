@@ -17,6 +17,7 @@ import {
   Badge,
   Button,
   Card,
+  CheckboxRow,
   EmptyState,
   IconButton,
   Input,
@@ -28,6 +29,7 @@ import { ConfirmDialog } from '../../components/admin/ConfirmDialog';
 import { useAdmin } from '../../lib/auth/AdminContext';
 import { useCollection, type WithId } from '../../lib/data/useCollection';
 import { useDocument } from '../../lib/data/useDocument';
+import { useHighlightSync } from '../../lib/content/useHighlightSync';
 import type { LiveStatus, ProchainConseil, Publication } from '../../lib/content/types';
 import { extractYoutubeId, getYoutubeEmbedUrl, getYoutubeThumbnail } from '../../lib/content/youtube';
 import { colors, radii, spacing, typography } from '../../lib/theme';
@@ -88,16 +90,20 @@ export default function LiveScreen() {
   const [form, setForm] = useState<Publication>(emptyPublication());
   const [submitting, setSubmitting] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const [misEnAvant, setMisEnAvant] = useState(false);
+  const { isFeatured, syncHighlight } = useHighlightSync();
 
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyPublication());
+    setMisEnAvant(false);
     setModalVisible(true);
   };
 
   const openEdit = (publication: WithId<Publication>) => {
     setEditingId(publication.id);
     setForm(publication);
+    setMisEnAvant(isFeatured(`pub-${publication.id}`));
     setModalVisible(true);
   };
 
@@ -105,8 +111,14 @@ export default function LiveScreen() {
     if (!form.titre.trim() || !extractYoutubeId(form.url)) return;
     setSubmitting(true);
     try {
+      let id = editingId;
       if (editingId) await update(editingId, form);
-      else await add(form);
+      else id = await add(form);
+      await syncHighlight(`pub-${id}`, misEnAvant, {
+        titre: form.titre,
+        imageUrl: getYoutubeThumbnail(form.url) ?? '',
+        rubriqueHref: '/live',
+      });
       setModalVisible(false);
     } finally {
       setSubmitting(false);
@@ -176,6 +188,11 @@ export default function LiveScreen() {
             placeholder="AAAA-MM-JJ"
           />
         </View>
+        <CheckboxRow
+          label="Mettre en avant sur l’accueil"
+          checked={misEnAvant}
+          onToggle={() => setMisEnAvant((v) => !v)}
+        />
       </FormModal>
 
       <ConfirmDialog

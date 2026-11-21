@@ -54,13 +54,15 @@ export function useCollection<T extends Record<string, unknown>>(
   const add = useCallback(
     async (data: T) => {
       if (isFirebaseConfigured && db) {
-        await addDoc(collection(db, collectionName), {
+        const ref = await addDoc(collection(db, collectionName), {
           ...data,
           createdAt: serverTimestamp(),
         });
-      } else {
-        setDemoItems((prev) => [{ id: `demo-${Date.now()}`, ...data }, ...prev]);
+        return ref.id;
       }
+      const id = `demo-${Date.now()}`;
+      setDemoItems((prev) => [{ id, ...data }, ...prev]);
+      return id;
     },
     [collectionName]
   );

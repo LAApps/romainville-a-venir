@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FlatList, Image, Linking, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +18,41 @@ export default function HighlightsCarousel({
   const [index, setIndex] = useState(0);
   const { width } = useWindowDimensions();
   const ITEM_WIDTH = Math.min(width - spacing(10), 420);
+  const listRef = useRef<FlatList<WithId<Highlight>>>(null);
+  const indexRef = useRef(0);
+
+  const setActiveIndex = (next: number) => {
+    indexRef.current = next;
+    setIndex(next);
+  };
+
+  // Sur le web, le navigateur peut restaurer un défilement horizontal non
+  // nul au montage (ancrage de scroll). On repart explicitement de 0 pour
+  // que l'index affiché corresponde bien à la première diapositive.
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    setActiveIndex(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Défilement automatique toutes les 3 secondes. Un seul minuteur, relancé
+  // uniquement si le nombre de diapositives change, pour ne pas dépendre de
+  // l'état React (sujet à décalage avec les effets ré-exécutés trop souvent).
+  useEffect(() => {
+    if (highlights.length <= 1) return;
+    const timer = setInterval(() => {
+      const nextIndex = (indexRef.current + 1) % highlights.length;
+      // animated:false — un scroll animé entre régulièrement en conflit avec
+      // le scroll-snap CSS du web (snapToInterval), ce qui désynchronise la
+      // position réelle de l'index logique au fil des avances.
+      listRef.current?.scrollToOffset({
+        offset: nextIndex * (ITEM_WIDTH + spacing(3)),
+        animated: false,
+      });
+      setActiveIndex(nextIndex);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [highlights.length, ITEM_WIDTH]);
 
   if (highlights.length === 0) {
     return null;
@@ -34,6 +69,7 @@ export default function HighlightsCarousel({
   return (
     <View>
       <FlatList
+        ref={listRef}
         data={highlights}
         keyExtractor={(item) => item.id}
         horizontal
@@ -44,7 +80,7 @@ export default function HighlightsCarousel({
         contentContainerStyle={{ gap: spacing(3) }}
         onMomentumScrollEnd={(e) => {
           const newIndex = Math.round(e.nativeEvent.contentOffset.x / (ITEM_WIDTH + spacing(3)));
-          setIndex(newIndex);
+          setActiveIndex(newIndex);
         }}
         renderItem={({ item }) => (
           <Pressable

@@ -13,7 +13,7 @@ export const elus: Elu[] = [
   {
     id: 'daouda-gory',
     nom: 'Daouda Gory',
-    role: 'Conseiller municipal d’opposition — Tête de liste Romainville à Venir',
+    role: 'Conseiller municipal d’opposition — Président du groupe Romainville à Venir',
     photo: require('../../assets/elus/daouda_gory.png'),
     email: ASSOCIATION_EMAIL,
   },

@@ -2,6 +2,7 @@ import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue, type QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { getMessaging } from 'firebase-admin/messaging';
 import * as nodemailer from 'nodemailer';
 
 initializeApp();
@@ -205,3 +206,52 @@ export const helloassoWebhook = onRequest(
     res.status(200).send('OK');
   }
 );
+
+// Notifications push web : chaque appareil qui active les notifications
+// enregistre son token FCM (déduplication naturelle via l'ID de document).
+export const registerPushToken = onCall({ region: 'europe-west1' }, async (request) => {
+  const token = request.data?.token;
+  if (!token || typeof token !== 'string') {
+    throw new HttpsError('invalid-argument', 'Token manquant.');
+  }
+  await db.collection('pushTokens').doc(token).set({
+    token,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  return { success: true };
+});
+
+// Diffusion d'une notification à tous les appareils enregistrés. Réservé aux
+// admins (request.auth n'existe que pour les comptes connectés). Les tokens
+// devenus invalides (désinstallation, etc.) sont nettoyés au passage.
+export const sendPushNotification = onCall({ region: 'europe-west1' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Réservé aux administrateurs.');
+  }
+  const { title, body } = request.data as { title?: string; body?: string };
+  if (!title?.trim() || !body?.trim()) {
+    throw new HttpsError('invalid-argument', 'Titre et message requis.');
+  }
+
+  const snapshot = await db.collection('pushTokens').get();
+  const tokens = snapshot.docs.map((d) => d.id);
+  if (tokens.length === 0) return { sent: 0 };
+
+  const response = await getMessaging().sendEachForMulticast({
+    tokens,
+    notification: { title: title.trim(), body: body.trim() },
+  });
+
+  const invalidTokens = response.responses
+    .map((r, i) => ({ r, token: tokens[i] }))
+    .filter(
+      ({ r }) =>
+        !r.success &&
+        (r.error?.code === 'messaging/registration-token-not-registered' ||
+          r.error?.code === 'messaging/invalid-registration-token')
+    )
+    .map(({ token: t }) => t);
+  await Promise.all(invalidTokens.map((t) => db.collection('pushTokens').doc(t).delete()));
+
+  return { sent: response.successCount };
+});

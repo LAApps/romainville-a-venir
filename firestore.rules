@@ -68,5 +68,11 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if false;
     }
+    // Tokens push : écrits uniquement par la Cloud Function registerPushToken
+    // (SDK Admin). Pas de lecture côté client, même admin — ce ne sont que
+    // des identifiants techniques, pas du contenu à consulter.
+    match /pushTokens/{docId} {
+      allow read, write: if false;
+    }
   }
 }

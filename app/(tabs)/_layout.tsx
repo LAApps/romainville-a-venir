@@ -71,6 +71,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="installer" options={{ href: null }} />
       <Tabs.Screen name="admin/login" options={{ href: null }} />
       <Tabs.Screen name="admin/adhesions" options={{ href: null }} />
+      <Tabs.Screen name="admin/notifications" options={{ href: null }} />
     </Tabs>
   );
 }

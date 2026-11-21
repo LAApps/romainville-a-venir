@@ -19,6 +19,9 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID ?? extra.firebaseAppId,
 };
 
+export const FIREBASE_VAPID_KEY =
+  process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY ?? extra.firebaseVapidKey;
+
 export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 
 let app: FirebaseApp | undefined;
